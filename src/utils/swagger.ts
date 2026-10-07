@@ -14,25 +14,25 @@ const options: swaggerJSDoc.Options = {
     },
     tags: [
       { name: "Auth", description: "Authentication endpoints" },
-      { name: "Banks", description: "Bank management" },
-      { name: "Brands", description: "Brand management" },
+      // { name: "Banks", description: "Bank management" },
+      // { name: "Brands", description: "Brand management" },
       { name: "Menus", description: "Application menu management (route and caption)" },
       { name: "AppRoles", description: "Application roles (name and status)" },
       { name: "Privileges", description: "Permission definitions (read-only listing)" },
-      { name: "Categories", description: "Category management" },
-      { name: "InventoryItems", description: "Inventory item management" },
-      { name: "SubCategories", description: "Sub-category management" },
-      { name: "Suppliers", description: "Supplier management" },
-      { name: "Projects", description: "Project management" },
-      { name: "ProjectCollections", description: "Inventory project_collection transactions" },
-      { name: "Purchases", description: "Purchase transactions" },
-      { name: "SchoolClasses", description: "School class management" },
-      { name: "Students", description: "Student management" },
-      { name: "SubClasses", description: "Sub class management" },
-      { name: "Terms", description: "Term management" },
-      { name: "Sessions", description: "Session management" },
-      { name: "Stores", description: "Store management" },
-      { name: "StoreTransfers", description: "Inter-store inventory transfers" },
+      // { name: "Categories", description: "Category management" },
+      // { name: "InventoryItems", description: "Inventory item management" },
+      // { name: "SubCategories", description: "Sub-category management" },
+      // { name: "Suppliers", description: "Supplier management" },
+      // { name: "Projects", description: "Project management" },
+      // { name: "ProjectCollections", description: "Inventory project_collection transactions" },
+      // { name: "Purchases", description: "Purchase transactions" },
+      // { name: "SchoolClasses", description: "School class management" },
+      // { name: "Students", description: "Student management" },
+      // { name: "SubClasses", description: "Sub class management" },
+      // { name: "Terms", description: "Term management" },
+      // { name: "Sessions", description: "Session management" },
+      // { name: "Stores", description: "Store management" },
+      // { name: "StoreTransfers", description: "Inter-store inventory transfers" },
       {
         name: "ActivePeriod",
         description: "Active period singleton (session + term + date range)",
@@ -89,11 +89,17 @@ const options: swaggerJSDoc.Options = {
         description: "Temporary journal transfer entries (CRUD)",
       },
       { name: "Users", description: "User listing and profile (authenticated)" },
-      { name: "AuditLogs", description: "Audit log listing (current user and admin-style filters)" },
+      {
+        name: "AuditLogs",
+        description: "Audit log listing (current user and admin-style filters)",
+      },
       { name: "Departments", description: "Department master data (CRUD)" },
       { name: "GradeLevels", description: "Grade level master data (CRUD)" },
       { name: "Staff", description: "Staff registration and profile management" },
-      { name: "StaffBankDetails", description: "Staff bank account details (CRUD and bulk create)" },
+      {
+        name: "StaffBankDetails",
+        description: "Staff bank account details (CRUD and bulk create)",
+      },
       {
         name: "SalaryComponents",
         description: "Payroll salary components (earnings, deductions, function-type formulas)",
@@ -116,7 +122,8 @@ const options: swaggerJSDoc.Options = {
       },
       {
         name: "AdministrativeExpenseComponents",
-        description: "Administrative expense categories/components with optional ledger account (CRUD)",
+        description:
+          "Administrative expense categories/components with optional ledger account (CRUD)",
       },
       {
         name: "AdministrativeExpenses",
@@ -188,7 +195,8 @@ const options: swaggerJSDoc.Options = {
       },
       {
         name: "Assignments",
-        description: "Teacher assignments per class, subject, session, and term with attachments (CRUD)",
+        description:
+          "Teacher assignments per class, subject, session, and term with attachments (CRUD)",
       },
       {
         name: "StudentAssignments",
@@ -202,8 +210,14 @@ const options: swaggerJSDoc.Options = {
       },
       { name: "Uoms", description: "Unit of measurement (UoM) management" },
       { name: "Donations", description: "Inventory donation transactions" },
-      { name: "Sales", description: "Inventory sales transactions (bulk create, list, grouped by reference)" },
-      { name: "Cashiers", description: "Cashier records linked to staff and ledger accounts (CRUD)" },
+      {
+        name: "Sales",
+        description: "Inventory sales transactions (bulk create, list, grouped by reference)",
+      },
+      {
+        name: "Cashiers",
+        description: "Cashier records linked to staff and ledger accounts (CRUD)",
+      },
       { name: "Dashboard", description: "Dashboard endpoints" },
       { name: "Email", description: "Email management" },
       {
@@ -216,8 +230,7 @@ const options: swaggerJSDoc.Options = {
       },
       {
         name: "MerchantRiskScores",
-        description:
-          "Merchant risk score calculation from category risk and purchase utilization",
+        description: "Merchant risk score calculation from category risk and purchase utilization",
       },
       { name: "Helper", description: "Helper utilities" },
       { name: "Upload", description: "File upload management" },
