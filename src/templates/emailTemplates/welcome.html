@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{appName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        .account-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .account-details h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .detail-item {
+            margin: 10px 0;
+            padding: 5px 0;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #3498db;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to {{appName}}!</h1>
+            <p>Your journey starts here</p>
+        </div>
+        
+        <div class="content">
+            <div class="welcome-message">
+                <h2>Hello {{userName}},</h2>
+                <p>Welcome to {{appName}}! We're thrilled to have you join our community. Your account has been successfully created and you're all set to get started.</p>
+            </div>
+
+            <div class="account-details">
+                <h3>Your Account Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Email:</span> {{userEmail}}
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Account Type:</span> {{userType}}
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Registration Date:</span> {{registrationDate}}
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Account Status:</span> <span style="color: #28a745;">Active</span>
+                </div>
+            </div>
+
+            <p>To complete your setup and start using all our features, please verify your email address:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{verificationLink}}" class="cta-button">Verify Email Address</a>
+            </div>
+
+            <p style="font-size: 14px; color: #6c757d;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="{{verificationLink}}">{{verificationLink}}</a>
+            </p>
+
+            <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                <h3 style="margin-top: 0; color: #1976d2;">What's Next?</h3>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Complete your profile setup</li>
+                    <li>Explore our platform features</li>
+                    <li>Connect with other users</li>
+                    <li>Start your first project</li>
+                </ul>
+            </div>
+
+            <p>If you have any questions or need assistance, our support team is here to help. Don't hesitate to reach out!</p>
+            
+            <p>Best regards,<br>
+            <strong>The {{appName}} Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Twitter</a>
+                <a href="#">LinkedIn</a>
+                <a href="#">Instagram</a>
+            </div>
+            <p>&copy; 2024 {{appName}}. All rights reserved.</p>
+            <p>This email was sent to {{userEmail}}. If you didn't create this account, please ignore this email.</p>
+            <p>
+                <a href="#">Privacy Policy</a> | 
+                <a href="#">Terms of Service</a> | 
+                <a href="#">Contact Support</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

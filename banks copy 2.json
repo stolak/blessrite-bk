@@ -1,0 +1,167 @@
+[
+  {
+    "id": "250f8e30-287e-4a0b-8f97-3ca2d3c68827",
+    "bankCode": "000001",
+    "bankName": "Sterling Bank"
+  },
+  {
+    "id": "a20d9162-ca18-474f-a1dc-f5532f0727a6",
+    "bankCode": "000002",
+    "bankName": "Keystone Bank"
+  },
+  {
+    "id": "1fe2b53e-d106-439c-abaa-f4e4322d0577",
+    "bankCode": "000003",
+    "bankName": "FCMB"
+  },
+  {
+    "id": "aa11c3c5-b79f-42ab-8063-d0700f3e9af6",
+    "bankCode": "000004",
+    "bankName": "United Bank for Africa"
+  },
+  {
+    "id": "961f7147-8d04-4c93-be02-aa102f9717e2",
+    "bankCode": "000006",
+    "bankName": "JAIZ Bank"
+  },
+  {
+    "id": "74127047-c45b-42dc-9c88-0082945f941d",
+    "bankCode": "000007",
+    "bankName": "Fidelity Bank"
+  },
+  {
+    "id": "f5ac1ac0-eeb6-431f-9bd7-9a4f3fb471e1",
+    "bankCode": "000008",
+    "bankName": "Polaris Bank"
+  },
+  {
+    "id": "227e41f9-18c9-48be-9818-d0bef077dd17",
+    "bankCode": "000009",
+    "bankName": "Citi Bank"
+  },
+  {
+    "id": "9fc551fc-aab9-4e85-a7b0-675f2fdf1bc8",
+    "bankCode": "000010",
+    "bankName": "Ecobank Bank"
+  },
+  {
+    "id": "48f61e6e-675c-424f-a687-c27dcefd2f4a",
+    "bankCode": "000011",
+    "bankName": "Unity Bank"
+  },
+  {
+    "id": "3bcf1f6c-3356-4e98-8db7-2f29bb9badcc",
+    "bankCode": "000012",
+    "bankName": "Stanbic IBTC Bank"
+  },
+  {
+    "id": "aa316a80-1bf2-4b93-86d0-08745ec82512",
+    "bankCode": "000013",
+    "bankName": "GTBank Plc"
+  },
+  {
+    "id": "859a2d5e-e0bc-48fa-abb8-26855fd4726e",
+    "bankCode": "000014",
+    "bankName": "Access Bank"
+  },
+  {
+    "id": "03f904e1-5a86-4d95-9157-c03a530649ba",
+    "bankCode": "000015",
+    "bankName": "Zenith Bank Plc"
+  },
+  {
+    "id": "58b95998-87ab-415b-8bd8-74b46ad4745c",
+    "bankCode": "000016",
+    "bankName": "First Bank of Nigeria"
+  },
+  {
+    "id": "8bbdbdae-7bd5-4ea8-8b13-b23605606f7a",
+    "bankCode": "000017",
+    "bankName": "Wema Bank"
+  },
+  {
+    "id": "21add8e7-e7bf-42cb-869c-36bd54657dfb",
+    "bankCode": "000018",
+    "bankName": "Union Bank"
+  },
+  {
+    "id": "c1695ede-b2e1-4923-a679-7bcc4aa1209f",
+    "bankCode": "000019",
+    "bankName": "Enterprise Bank"
+  },
+  {
+    "id": "1eecc30d-a7db-4843-96d7-efd1b7838900",
+    "bankCode": "000020",
+    "bankName": "Heritage Bank"
+  },
+  {
+    "id": "6c3b6261-5b39-4496-9fd6-6bbd15332ed5",
+    "bankCode": "000021",
+    "bankName": "Standard Chartered"
+  },
+  {
+    "id": "5a1df434-edaf-40f2-bdcb-07743b753e74",
+    "bankCode": "000022",
+    "bankName": "Suntrust Bank"
+  },
+  {
+    "id": "e3f6f43d-70b6-4e48-959c-0bc47e8912a7",
+    "bankCode": "000023",
+    "bankName": "Providus Bank"
+  },
+  {
+    "id": "36b369b1-914e-4280-95ac-8c77c2e26de3",
+    "bankCode": "000024",
+    "bankName": "Rand Merchant Bank"
+  },
+  {
+    "id": "1ba4bfcb-c380-43fa-a8be-6c47989807aa",
+    "bankCode": "000025",
+    "bankName": "Titan Trust Bank"
+  },
+  {
+    "id": "1d02fcfd-3bce-4ba7-a22f-196e23e95709",
+    "bankCode": "000026",
+    "bankName": "Taj Bank"
+  },
+  {
+    "id": "0f6e7a9b-5d7c-408e-8b9e-68eb66d77e35",
+    "bankCode": "000027",
+    "bankName": "Globus Bank"
+  },
+  {
+    "id": "fd1067b2-2f15-47d8-a26c-dad51fcc5b01",
+    "bankCode": "000028",
+    "bankName": "Central Bank of Nigeria"
+  },
+  {
+    "id": "d40c7963-8ad1-49ab-a4fd-3288927fa85c",
+    "bankCode": "000029",
+    "bankName": "Lotus Bank"
+  },
+  {
+    "id": "47a1aacb-955c-4cf7-9af2-26b0eaa965ec",
+    "bankCode": "000031",
+    "bankName": "Premium Trust Bank"
+  },
+  {
+    "id": "fd9ce241-550b-4a55-9264-86822fb03de4",
+    "bankCode": "000033",
+    "bankName": "eNaira"
+  },
+  {
+    "id": "caa8f007-50f7-4f3d-9772-22307f9ba3a6",
+    "bankCode": "000034",
+    "bankName": "Signature Bank"
+  },
+  {
+    "id": "8abf3a2a-8101-4c6c-8379-ca2e3ea9b6b7",
+    "bankCode": "000036",
+    "bankName": "Optimus Bank"
+  },
+  {
+    "id": "7847eb1a-67c8-4863-a390-124f11fd295b",
+    "bankCode": "000030",
+    "bankName": "Parallex Bank"
+  }
+]

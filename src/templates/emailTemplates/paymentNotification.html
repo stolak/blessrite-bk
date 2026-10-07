@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment {{paymentStatus}} - {{appName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .payment-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid {{statusColor}};
+        }
+        .payment-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: {{statusColor}};
+            text-align: center;
+            margin: 20px 0;
+        }
+        .payment-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .detail-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, {{buttonColor}} 0%, {{buttonColorDark}} 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .transaction-info {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .transaction-info h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .security-notice {
+            background-color: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #ffeaa7;
+        }
+        .security-notice h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .status-success {
+            border-left-color: #27ae60;
+        }
+        .status-pending {
+            border-left-color: #f39c12;
+        }
+        .status-failed {
+            border-left-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Payment {{paymentStatus}}</h1>
+            <p>Transaction notification from {{appName}}</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{userName}},</h2>
+            <p>This is to inform you about a payment transaction on your {{appName}} account.</p>
+
+            <div class="payment-card {{statusClass}}">
+                <h3 style="text-align: center; margin: 0 0 20px 0; color: {{statusColor}};">{{paymentStatus}}</h3>
+                <div class="payment-amount">{{currency}}{{amount}}</div>
+                
+                <div class="payment-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Transaction ID</div>
+                        <div class="detail-value">{{transactionId}}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Payment Method</div>
+                        <div class="detail-value">{{paymentMethod}}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Date & Time</div>
+                        <div class="detail-value">{{transactionDate}}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Reference</div>
+                        <div class="detail-value">{{reference}}</div>
+                    </div>
+                </div>
+            </div>
+
+            {{#if isSuccessful}}
+            <div class="transaction-info">
+                <h3>✅ Payment Successful</h3>
+                <p>Your payment has been processed successfully. The funds have been credited to your account and you can now access the purchased services.</p>
+                {{#if actionLink}}
+                <div style="text-align: center;">
+                    <a href="{{actionLink}}" class="cta-button">View Transaction Details</a>
+                </div>
+                {{/if}}
+            </div>
+            {{/if}}
+
+            {{#if isPending}}
+            <div class="transaction-info">
+                <h3>⏳ Payment Pending</h3>
+                <p>Your payment is currently being processed. This usually takes a few minutes, but may take up to 24 hours depending on your payment method.</p>
+                <p>You will receive another notification once the payment is confirmed.</p>
+            </div>
+            {{/if}}
+
+            {{#if isFailed}}
+            <div class="transaction-info">
+                <h3>❌ Payment Failed</h3>
+                <p>Unfortunately, your payment could not be processed. This could be due to insufficient funds, incorrect payment details, or other issues.</p>
+                <div style="text-align: center;">
+                    <a href="{{retryLink}}" class="cta-button">Retry Payment</a>
+                </div>
+            </div>
+            {{/if}}
+
+            {{#if additionalInfo}}
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #495057;">Additional Information</h3>
+                <p>{{additionalInfo}}</p>
+            </div>
+            {{/if}}
+
+            <div class="security-notice">
+                <h3>🔒 Security Notice</h3>
+                <ul>
+                    <li>Never share your transaction details with anyone</li>
+                    <li>Always verify transactions in your account dashboard</li>
+                    <li>Contact us immediately if you notice any unauthorized transactions</li>
+                    <li>Keep your payment methods secure and up to date</li>
+                </ul>
+            </div>
+
+            <p>If you have any questions about this transaction or need assistance, please contact our support team.</p>
+            
+            <p>Best regards,<br>
+            <strong>The {{appName}} Payment Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 {{appName}}. All rights reserved.</p>
+            <p>This email was sent to {{userEmail}} regarding transaction {{transactionId}}.</p>
+            <p>
+                <a href="#">Transaction History</a> | 
+                <a href="#">Payment Methods</a> | 
+                <a href="#">Contact Support</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

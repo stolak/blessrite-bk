@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "C:\\Users\\STEPHEN\\Documents\\GitHub\\school-account-inventory-bk\\dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src",
+    "src/types"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

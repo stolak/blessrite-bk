@@ -1,0 +1,140 @@
+{
+  "Retail & Consumer Goods": [
+    "Electronics & Gadgets",
+    "Mobile Phones & Accessories",
+    "Computers, Laptops & IT Equipment",
+    "Home Appliances",
+    "Furniture & Home Décor",
+    "Clothing & Fashion Accessories",
+    "Shoes & Footwear",
+    "Supermarkets & Grocery Stores",
+    "Cosmetics, Beauty & Personal Care",
+    "Jewelry & Watches",
+    "Sporting Goods & Fitness Equipment",
+    "Baby Products & Kids' Stores",
+    "Books, Stationery & Educational Materials",
+    "Pet Supplies"
+  ],
+  "Automotive & Transport": [
+    "Car Dealerships (New & Used)",
+    "Motorcycle & Tricycle Sales",
+    "Auto Parts & Accessories",
+    "Vehicle Service & Repairs",
+    "Tyres, Batteries & Lubricants",
+    "Vehicle Rentals & Leasing",
+    "Logistics & Delivery Companies"
+  ],
+  "Technology & Communications": [
+    "Mobile Phone Retailers & Service Centers",
+    "ICT Equipment Vendors",
+    "Software & SaaS Providers",
+    "Internet Service Providers (ISPs)",
+    "Web Design & Digital Agencies",
+    "Computer Repairs & Maintenance"
+  ],
+  "Home, Utilities & Construction": [
+    "Hardware Stores & Building Materials",
+    "Plumbing & Electrical Supplies",
+    "Interior Design & Decoration",
+    "Real Estate Agents & Property Developers",
+    "Solar Power & Renewable Energy Installers",
+    "Security Systems & CCTV Providers",
+    "Facility Management Services"
+  ],
+  "Healthcare & Wellness": [
+    "Pharmacies & Drugstores",
+    "Clinics & Diagnostic Centers",
+    "Dental Practices",
+    "Opticians & Eyewear Stores",
+    "Fitness & Gym Centers",
+    "Spa, Massage & Wellness Centers",
+    "Medical Equipment Suppliers"
+  ],
+  "Education & Training": [
+    "Private Schools & Colleges",
+    "Tertiary Institutions (Vocational, Polytechnics, Universities)",
+    "E-Learning Platforms",
+    "Professional Certification & Training Providers",
+    "Skill Development & Coding Bootcamps"
+  ],
+  "Hospitality & Food Services": [
+    "Restaurants & Quick Service Outlets",
+    "Hotels, Lodges & Guesthouses",
+    "Event Centers & Catering Services",
+    "Food Vendors & Bakers",
+    "Coffee Shops & Lounges",
+    "Beverage & Alcohol Retailers"
+  ],
+  "Entertainment & Lifestyle": [
+    "Event Planners & Decorators",
+    "Music & Sound Equipment Vendors",
+    "Photography & Videography Studios",
+    "Cinemas & Recreation Centers",
+    "Game & Toy Stores",
+    "Travel & Tour Agencies"
+  ],
+  "Finance & Professional Services": [
+    "Accounting & Audit Firms",
+    "Legal Services",
+    "Consulting Firms",
+    "Insurance Agents & Brokers",
+    "Real Estate & Property Management Firms"
+  ],
+  "Agriculture & Agro-Allied": [
+    "Farm Equipment & Machinery Suppliers",
+    "Agrochemical Dealers",
+    "Food Processing & Packaging Firms",
+    "Agricultural Produce Traders",
+    "Animal Feed Suppliers"
+  ],
+  "Fashion, Art & Creative Businesses": [
+    "Tailors, Designers & Boutiques",
+    "Art Galleries & Creative Studios",
+    "Printing & Branding Companies",
+    "Photography & Film Production Houses"
+  ],
+  "Telecom & Utilities": [
+    "Telecommunications Retailers",
+    "Solar & Power Solutions",
+    "Generator & Inverter Retailers",
+    "Cable TV & Internet Resellers"
+  ],
+  "E-Commerce & Marketplaces": [
+    "Online Retailers",
+    "Social Media Sellers",
+    "E-Commerce Aggregators",
+    "Drop-Shipping & Fulfilment Companies"
+  ],
+  "Travel, Logistics & Mobility": [
+    "Transport Operators (Bus, Airline, Ferry)",
+    "Travel Agents & Tour Operators",
+    "Courier & Delivery Companies",
+    "Car Hire & Ride-Hailing Partners"
+  ],
+  "Real Estate & Construction": [
+    "Real Estate Developers",
+    "Builders & Contractors",
+    "Construction Equipment Suppliers",
+    "Furniture & Interior Companies"
+  ],
+  "Health, Beauty & Lifestyle": [
+    "Skincare & Cosmetic Retailers",
+    "Salons & Barbershops",
+    "Perfume & Fragrance Retailers",
+    "Fashion Boutiques",
+    "Wellness Therapists"
+  ],
+  "SME & Trade Services": [
+    "Wholesale Distributors",
+    "Retail Stores (General Merchandise)",
+    "POS Operators & Agent Networks",
+    "Cooperatives & Trade Associations"
+  ],
+  "Others (General)": [
+    "NGOs & Social Enterprises",
+    "Religious Organizations (Bookstores, Event Halls)",
+    "Printing Press & Media Houses",
+    "Manufacturers & Industrial Suppliers",
+    "Equipment Leasing Companies"
+  ]
+}

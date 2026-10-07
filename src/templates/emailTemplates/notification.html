@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{notificationTitle}} - {{appName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .notification-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #9b59b6;
+        }
+        .notification-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+        }
+        .notification-message {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #495057;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .priority-high {
+            border-left-color: #e74c3c;
+        }
+        .priority-medium {
+            border-left-color: #f39c12;
+        }
+        .priority-low {
+            border-left-color: #27ae60;
+        }
+        .notification-meta {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e9ecef;
+        }
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+        .meta-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .meta-value {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{notificationTitle}}</h1>
+            <p>Important notification from {{appName}}</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{userName}},</h2>
+            
+            <div class="notification-card {{priorityClass}}">
+                <h3 class="notification-title">{{notificationTitle}}</h3>
+                <div class="notification-message">
+                    {{notificationMessage}}
+                </div>
+            </div>
+
+            {{#if notificationMeta}}
+            <div class="notification-meta">
+                {{#each notificationMeta}}
+                <div class="meta-item">
+                    <span class="meta-label">{{@key}}:</span>
+                    <span class="meta-value">{{this}}</span>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if actionLink}}
+            <div style="text-align: center;">
+                <a href="{{actionLink}}" class="cta-button">{{actionText}}</a>
+            </div>
+            {{/if}}
+
+            {{#if additionalInfo}}
+            <div class="info-box">
+                <h3>Additional Information</h3>
+                <p>{{additionalInfo}}</p>
+            </div>
+            {{/if}}
+
+            {{#if nextSteps}}
+            <div class="info-box">
+                <h3>Next Steps</h3>
+                <ul>
+                    {{#each nextSteps}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
+
+            {{#if importantNotes}}
+            <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #856404;">Important Notes</h3>
+                <p>{{importantNotes}}</p>
+            </div>
+            {{/if}}
+
+            <p>If you have any questions about this notification or need assistance, please don't hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>
+            <strong>The {{appName}} Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 {{appName}}. All rights reserved.</p>
+            <p>This email was sent to {{userEmail}}.</p>
+            <p>
+                <a href="#">Notification Settings</a> | 
+                <a href="#">Privacy Policy</a> | 
+                <a href="#">Contact Support</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

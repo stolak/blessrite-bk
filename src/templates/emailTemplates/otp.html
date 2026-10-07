@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your LiftPay Verification Code</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            color: #1a202c;
+            margin-bottom: 24px;
+        }
+        
+        .otp-container {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .otp-label {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .otp-code {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2d3748;
+            letter-spacing: 8px;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .otp-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .instruction {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .expiry-warning {
+            background-color: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        
+        .expiry-warning .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: #f56565;
+            border-radius: 50%;
+            margin-right: 8px;
+            position: relative;
+        }
+        
+        .expiry-warning .icon::after {
+            content: '⏰';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+        }
+        
+        .expiry-warning .text {
+            color: #c53030;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .security-note {
+            background-color: #f7fafc;
+            border-left: 4px solid #4299e1;
+            padding: 16px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .security-note .text {
+            color: #2b6cb0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .footer {
+            background-color: #f7fafc;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .footer p {
+            margin: 0;
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .footer .brand {
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #718096;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .social-links a:hover {
+            color: #667eea;
+        }
+        
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+            margin: 30px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            
+            .header, .content, .footer {
+                padding: 30px 20px;
+            }
+            
+            .otp-code {
+                font-size: 28px;
+                letter-spacing: 6px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔐 Verification Code</h1>
+            <p>Secure your LiftPay account</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">
+                {{#if first_name}}Hi <strong>{{first_name}}</strong>,{{else}}Hello,{{/if}}
+            </div>
+            
+            <div class="instruction">
+                Use the code below to verify your email on LiftPay:
+            </div>
+            
+            <!-- OTP Code Display -->
+            <div class="otp-container pulse">
+                <div class="otp-label">Your Verification Code</div>
+                <div class="otp-code otp-highlight">{{otp_code}}</div>
+            </div>
+            
+            <!-- Expiry Warning -->
+            <div class="expiry-warning">
+                <span class="icon"></span>
+                <span class="text">This code will expire in 10 minutes</span>
+            </div>
+            
+            <!-- Security Note -->
+            <div class="security-note">
+                <div class="text">
+                    <strong>Security Notice:</strong> If you didn't request this verification code, please ignore this message and ensure your account security.
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div style="color: #718096; font-size: 14px; text-align: center;">
+                <p><strong>Why are you receiving this?</strong></p>
+                <p>You're receiving this verification code because you or someone initiated a email verification process on your LiftPay account. This is a security measure to protect your account.</p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="brand">LiftPay</div>
+            <p>Secure • Fast • Reliable Payment Solutions</p>
+            
+            <div class="social-links">
+                <a href="#">Support</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #a0aec0; margin-top: 20px;">
+                This is an automated message. Please do not reply to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

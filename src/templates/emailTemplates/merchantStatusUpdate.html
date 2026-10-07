@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Application Status Update - {{appName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .status-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid {{statusColor}};
+        }
+        .status-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: {{statusColor}};
+            margin: 0 0 15px 0;
+        }
+        .status-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .status-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .status-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .status-value {
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, {{buttonColor}} 0%, {{buttonColorDark}} 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .next-steps {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .next-steps h3 {
+            margin-top: 0;
+            color: #27ae60;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .timeline {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .timeline h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 6px;
+        }
+        .timeline-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #3498db;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Application Status Update</h1>
+            <p>Your merchant application status has been updated</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{businessName}},</h2>
+            <p>We have an important update regarding your merchant application with {{appName}}. Please review the details below.</p>
+
+            <div class="status-card">
+                <h3 class="status-title">{{applicationStatus}}</h3>
+                <div class="status-details">
+                    <div class="status-item">
+                        <div class="status-label">Document Status</div>
+                        <div class="status-value">{{documentStatus}}</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Verification Status</div>
+                        <div class="status-value">{{verificationStatus}}</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Application ID</div>
+                        <div class="status-value">{{applicationId}}</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Updated Date</div>
+                        <div class="status-value">{{updateDate}}</div>
+                    </div>
+                </div>
+            </div>
+
+            {{#if isApproved}}
+            <div class="next-steps">
+                <h3>🎉 Congratulations!</h3>
+                <p>Your merchant account has been approved and is now active. You can start using all our platform features immediately.</p>
+                <div style="text-align: center;">
+                    <a href="{{dashboardLink}}" class="cta-button">Access Your Dashboard</a>
+                </div>
+            </div>
+            {{/if}}
+
+            {{#if needsAction}}
+            <div class="next-steps">
+                <h3>📋 Action Required</h3>
+                <p>Your application requires some additional information or documents to proceed. Please review the requirements and submit the necessary items.</p>
+                <div style="text-align: center;">
+                    <a href="{{applicationLink}}" class="cta-button">Review Application</a>
+                </div>
+            </div>
+            {{/if}}
+
+            {{#if isRejected}}
+            <div class="next-steps">
+                <h3>📝 Application Review</h3>
+                <p>Unfortunately, your application could not be approved at this time. Please review the feedback provided and consider resubmitting with the required changes.</p>
+                <div style="text-align: center;">
+                    <a href="{{applicationLink}}" class="cta-button">Review Feedback</a>
+                </div>
+            </div>
+            {{/if}}
+
+            <div class="timeline">
+                <h3>Application Timeline</h3>
+                <div class="timeline-item">
+                    <div class="timeline-icon">1</div>
+                    <div>Application submitted on {{submissionDate}}</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">2</div>
+                    <div>Initial review completed on {{reviewDate}}</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">3</div>
+                    <div>Status updated to {{applicationStatus}} on {{updateDate}}</div>
+                </div>
+            </div>
+
+            {{#if additionalNotes}}
+            <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #856404;">Additional Notes</h3>
+                <p>{{additionalNotes}}</p>
+            </div>
+            {{/if}}
+
+            <p>If you have any questions about this update or need assistance with your application, please don't hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>
+            <strong>The {{appName}} Merchant Services Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 {{appName}}. All rights reserved.</p>
+            <p>This email was sent to {{businessEmail}}. If you have questions, please contact support.</p>
+            <p>
+                <a href="#">Merchant Portal</a> | 
+                <a href="#">Support Center</a> | 
+                <a href="#">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

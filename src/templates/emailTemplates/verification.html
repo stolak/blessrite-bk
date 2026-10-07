@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - {{appName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .verification-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #27ae60;
+            text-align: center;
+        }
+        .verification-icon {
+            font-size: 48px;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+        .verification-code {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .security-info {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .security-info h3 {
+            margin-top: 0;
+            color: #27ae60;
+        }
+        .expiry-warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #ffeaa7;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .verification-steps {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .verification-steps h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 6px;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #27ae60;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Email Verification</h1>
+            <p>Verify your email address to complete registration</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{userName}},</h2>
+            <p>Thank you for registering with {{appName}}! To complete your account setup and ensure the security of your account, please verify your email address.</p>
+
+            <div class="verification-card">
+                <div class="verification-icon">✉️</div>
+                <h3>Verify Your Email Address</h3>
+                <p>Click the button below to verify your email address:</p>
+                
+                <div style="text-align: center;">
+                    <a href="{{verificationLink}}" class="cta-button">Verify Email Address</a>
+                </div>
+
+                <p style="font-size: 14px; color: #6c757d; margin-top: 20px;">
+                    Or copy and paste this link into your browser:<br>
+                    <a href="{{verificationLink}}" style="color: #27ae60; word-break: break-all;">{{verificationLink}}</a>
+                </p>
+            </div>
+
+            {{#if verificationCode}}
+            <div class="verification-card">
+                <h3>Alternative Verification Method</h3>
+                <p>If you prefer, you can also use this verification code:</p>
+                <div class="verification-code">{{verificationCode}}</div>
+                <p style="font-size: 14px; color: #6c757d;">Enter this code in the verification form on our website.</p>
+            </div>
+            {{/if}}
+
+            <div class="expiry-warning">
+                <strong>⏰ This verification link will expire in {{expirationTime}} hours</strong>
+            </div>
+
+            <div class="verification-steps">
+                <h3>How to Verify Your Email</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div>Click the "Verify Email Address" button above</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div>You'll be redirected to our verification page</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div>Your email will be verified automatically</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div>You can now access all features of your account</div>
+                </div>
+            </div>
+
+            <div class="security-info">
+                <h3>🔒 Why Verify Your Email?</h3>
+                <ul>
+                    <li>Ensures account security and prevents unauthorized access</li>
+                    <li>Enables password reset functionality</li>
+                    <li>Allows you to receive important account notifications</li>
+                    <li>Unlocks all platform features and capabilities</li>
+                </ul>
+            </div>
+
+            <p>If you didn't create an account with {{appName}}, please ignore this email. Your email address will not be verified.</p>
+            
+            <p>If you're having trouble verifying your email or didn't request this verification, please contact our support team.</p>
+            
+            <p>Best regards,<br>
+            <strong>The {{appName}} Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 {{appName}}. All rights reserved.</p>
+            <p>This email was sent to {{userEmail}}. If you didn't create this account, please ignore this email.</p>
+            <p>
+                <a href="#">Help Center</a> | 
+                <a href="#">Privacy Policy</a> | 
+                <a href="#">Contact Support</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
