@@ -28,8 +28,8 @@ datasource db {
 enum UserType {
   SuperAdmin
   Staff
-  Student
-  Parent
+  Driver
+  Customer
 }
 
 enum Status {
@@ -100,30 +100,16 @@ model User {
   passwordResetTokens PasswordResetToken[]
 
   // Inventory/School domain relations
-  userRoles                     UserRole[]
-  createdInventoryItems         InventoryItem[]        @relation("InventoryItemCreatedBy")
-  createdSuppliers              Supplier[]             @relation("SupplierCreatedBy")
-  createdSchoolClasses          SchoolClass[]          @relation("SchoolClassCreatedBy")
-  createdStudents               Student[]              @relation("StudentCreatedBy")
-  createdStaff                  Staff[]                @relation("StaffCreatedBy")
-  inventoryTransactionsReceived InventoryTransaction[] @relation("InventoryTransactionReceiver")
-  createdInventoryTransactions  InventoryTransaction[] @relation("InventoryTransactionCreatedBy")
-  staffProfile                  Staff?                 @relation("StaffUser")
+  userRoles             UserRole[]
+  staffProfile          Staff?                 @relation("StaffUser")
+  createdSuppliers      Supplier[]             @relation("SupplierCreatedBy")
+  createdStaff          Staff[]                @relation("StaffCreatedBy")
+  tempJournalTransfers TempJournalTransfer[]
 
-  createdProjects               Project[]                      @relation("ProjectCreatedBy")
-  managedStores                 Store[]                        @relation("StoreManager")
-  createdFacility               Facility[]                     @relation("FacilityCreatedBy")
-  /**
-   * Stores this user is granted access to (many-to-many; separate from primary manager role).
-   */
-  storeAccesses                 UserStore[]
-  tempJournalTransfers          TempJournalTransfer[]
-  studentJournalTransfers       StudentJournalTransfer[]
-  inventoryTransactions         InventoryTransaction[]
-  privilegeLinks                PrivilegeToUser[]
-  auditLogs                     AuditLog[]
-  cashiers                      Cashier[]
-  staffJournalTransfers         StaffJournalTransfer[]
+  privilegeLinks PrivilegeToUser[]
+  auditLogs      AuditLog[]
+  cashiers       Cashier[]
+
   salaryChartsCreated           SalaryChart[]                  @relation("SalaryChartCreatedBy")
   salaryChartsUpdated           SalaryChart[]                  @relation("SalaryChartUpdatedBy")
   staffSalaryOverrideComponents StaffSalaryOverrideComponent[] @relation("StaffSalaryOverrideCreatedBy")
@@ -132,11 +118,6 @@ model User {
   payrollProcessesPosted        PayrollProcess[]               @relation("PayrollProcessesPosted")
   administrativeExpensesCreated AdministrativeExpense[]        @relation("AdministrativeExpenseCreatedBy")
   administrativeExpensesUpdated AdministrativeExpense[]        @relation("AdministrativeExpenseUpdatedBy")
-  createdAssignments            Assignment[]                   @relation("AssignmentCreatedBy")
-  studentAssignments            StudentAssignment[]
-  students                      Student[]
-  teacherSubjects               TeacherSubjects[]
-  attendanceRecordsMarked       AttendanceRecord[]             @relation("AttendanceMarkedBy")
   vehicles                      Vehicle[]
 
   @@map("users")
@@ -158,10 +139,9 @@ model PasswordResetToken {
 }
 
 model Bank {
-  id               String             @id @default(uuid()) @db.Char(36)
-  bankCode         String             @unique
-  bankName         String
-  staffBankDetails StaffBankDetails[]
+  id       String @id @default(uuid()) @db.Char(36)
+  bankCode String @unique
+  bankName String
 
   @@map("banks")
 }
@@ -225,24 +205,6 @@ enum StaffPosition {
   teacher
   admin
   other
-}
-
-model Category {
-  id                  String                @id @default(uuid()) @db.Char(36)
-  name                String                @unique
-  description         String?
-  createdAt           DateTime              @default(now()) @map("created_at")
-  updatedAt           DateTime              @default(now()) @map("updated_at")
-  status              Status                @default(Active)
-  categoryType        InventoryCategoryType @default(Consumable)
-  consumableAccountId Int?                  @map("consumable_account_id")
-  consumableAccount   AccountChart?         @relation("CategoryConsumableAccount", fields: [consumableAccountId], references: [id])
-  subCategories       SubCategory[]
-  inventoryItems      InventoryItem[]
-  assetAccountId      Int?                  @map("asset_account_id")
-  assetAccount        AccountChart?         @relation("CategoryAssetAccount", fields: [assetAccountId], references: [id])
-
-  @@map("categories")
 }
 
 /// Named `AppRole` to avoid colliding with your existing `Role` enum.
@@ -356,23 +318,6 @@ model UserRole {
   @@map("user_roles")
 }
 
-model SubCategory {
-  id          String   @id @default(uuid()) @db.Char(36)
-  name        String
-  description String?
-  categoryId  String?  @map("category_id") @db.Char(36)
-  status      Status   @default(Active)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @map("updated_at")
-
-  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  inventoryItems InventoryItem[]
-
-  @@unique([name, categoryId])
-  @@index([categoryId])
-  @@map("sub_categories")
-}
-
 model Brand {
   id        String   @id @default(uuid()) @db.Char(36)
   name      String   @unique
@@ -380,274 +325,40 @@ model Brand {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
 
-  inventoryItems InventoryItem[]
-
   @@map("brands")
 }
 
-model Uom {
-  id        String   @id @default(uuid()) @db.Char(36)
-  name      String   @unique
-  symbol    String   @unique
-  status    Status   @default(Active)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-
-  inventoryItems InventoryItem[]
-
-  @@map("uoms")
-}
-
-model InventoryItem {
-  id                String   @id @default(uuid()) @db.Char(36)
-  sku               String?  @unique
-  name              String   @unique
-  categoryId        String?  @map("category_id") @db.Char(36)
-  subCategoryId     String?  @map("sub_category_id") @db.Char(36)
-  brandId           String?  @map("brand_id") @db.Char(36)
-  uomId             String?  @map("uom_id") @db.Char(36)
-  barcode           String?  @unique
-  costPrice         Decimal  @map("cost_price") @db.Decimal(12, 2)
-  sellingPrice      Decimal  @map("selling_price") @db.Decimal(12, 2)
-  lowStockThreshold Int      @default(0) @map("low_stock_threshold")
-  createdById       String?  @map("created_by") @db.Char(36)
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @map("updated_at")
-
-  category              Category?              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  subCategory           SubCategory?           @relation(fields: [subCategoryId], references: [id], onDelete: Restrict)
-  brand                 Brand?                 @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  uom                   Uom?                   @relation(fields: [uomId], references: [id], onDelete: Restrict)
-  createdBy             User?                  @relation("InventoryItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  status                Status                 @default(Active)
-  inventoryTransactions InventoryTransaction[]
-
-  @@index([categoryId])
-  @@index([subCategoryId])
-  @@index([brandId])
-  @@index([uomId])
-  @@index([createdById])
-  @@map("inventory_items")
-}
-
 model Supplier {
-  id                    String                 @id @default(uuid()) @db.Char(36)
-  name                  String                 @unique
-  contactName           String?                @map("contact_name")
-  email                 String?
-  phone                 String?
-  address               String?
-  city                  String?
-  state                 String?
-  country               String?
-  website               String?
-  notes                 String?
-  status                Status                 @default(Active)
-  createdById           String?                @map("created_by") @db.Char(36)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @default(now()) @map("updated_at")
+  id          String   @id @default(uuid()) @db.Char(36)
+  name        String   @unique
+  contactName String?  @map("contact_name")
+  email       String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  website     String?
+  notes       String?
+  status      Status   @default(Active)
+  createdById String?  @map("created_by") @db.Char(36)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
   // accountId             Int?                   @map("account_id")
   // account               AccountChart?          @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  createdBy             User?                  @relation("SupplierCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  inventoryTransactions InventoryTransaction[]
+  createdBy   User?    @relation("SupplierCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([createdById])
   @@map("suppliers")
-}
-
-model SchoolClass {
-  id          String    @id @default(uuid()) @db.Char(36)
-  name        String    @unique
-  status      Status    @default(Active)
-  createdById String    @map("created_by") @db.Char(36)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @default(now()) @map("updated_at")
-  createdBy   User      @relation("SchoolClassCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  students    Student[]
-
-  subClasses                         SubClass[]
-  classAssessmentTemplates           ClassAssessmentTemplate[]
-  classSubjects                      ClassSubject[]
-  studentSubjectRegistrations        StudentSubjectRegistration[]
-  studentAssessmentScores            StudentAssessmentScore[]
-  studentBehaviouralAssessmentScores StudentBehaviouralAssessmentScore[]
-  assessmentRemarks                  AssessmentRemarks[]
-  defaultClassRemarkSetups           DefaultClassRemarkSetup[]
-  assignments                        Assignment[]
-  studentAssignments                 StudentAssignment[]
-  teacherSubjects                    TeacherSubjects[]
-  studentTransports                  StudentTransport[]
-
-  @@index([createdById])
-  @@map("school_classes")
-}
-
-model SubClass {
-  id                                 String                              @id @default(uuid()) @db.Char(36)
-  name                               String
-  status                             Status                              @default(Active)
-  createdAt                          DateTime                            @default(now()) @map("created_at")
-  updatedAt                          DateTime                            @default(now()) @map("updated_at")
-  class                              SchoolClass?                        @relation(fields: [classId], references: [id], onDelete: Cascade)
-  classId                            String?                             @map("class_id") @db.Char(36)
-  students                           Student[]
-  inventoryTransactions              InventoryTransaction[]
-  classSubjects                      ClassSubject[]
-  studentSubjectRegistrations        StudentSubjectRegistration[]
-  studentAssessmentScores            StudentAssessmentScore[]
-  studentBehaviouralAssessmentScores StudentBehaviouralAssessmentScore[]
-  studentAssignments                 StudentAssignment[]
-  teacherSubjects                    TeacherSubjects[]
-
-  @@unique([name, classId])
-  @@index([classId])
-  @@map("sub_classes")
-}
-
-model Hostel {
-  id                    String                 @id @default(uuid()) @db.Char(36)
-  name                  String                 @unique
-  status                Status                 @default(Active)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @default(now()) @map("updated_at")
-  hostelRooms           HostelRoom[]
-  inventoryTransactions InventoryTransaction[]
-
-  @@map("hostels")
-}
-
-model HostelRoom {
-  id                    String                 @id @default(uuid()) @db.Char(36)
-  name                  String                 @unique
-  hostelId              String                 @map("hostel_id") @db.Char(36)
-  hostel                Hostel                 @relation(fields: [hostelId], references: [id], onDelete: Restrict)
-  status                Status                 @default(Active)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @default(now()) @map("updated_at")
-  inventoryTransactions InventoryTransaction[]
-
-  @@map("hostel_rooms")
-}
-
-model Student {
-  id              String        @id @default(uuid()) @db.Char(36)
-  admissionNumber String        @unique @map("admission_number")
-  firstName       String        @map("first_name")
-  middleName      String?       @map("middle_name")
-  lastName        String        @map("last_name")
-  studentEmail    String?       @unique @map("student_email")
-  gender          Gender
-  dateOfBirth     DateTime      @map("date_of_birth") @db.Date
-  classId         String?       @map("class_id") @db.Char(36)
-  guardianName    String?       @map("guardian_name")
-  guardianEmail   String?       @map("guardian_email")
-  guardianContact String?       @map("guardian_contact")
-  address         String?
-  status          StudentStatus @default(Active)
-  imageUrl        String?       @map("image_url")
-
-  accountId   Int?          @map("account_id")
-  account     AccountChart? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  createdById String        @map("created_by") @db.Char(36)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @default(now()) @map("updated_at")
-  userId      String?       @map("user_id") @db.Char(36)
-  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  class       SchoolClass?  @relation(fields: [classId], references: [id], onDelete: SetNull)
-  createdBy   User          @relation("StudentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-
-  subClass                           SubClass?                           @relation(fields: [subClassId], references: [id])
-  subClassId                         String?                             @db.Char(36)
-  inventoryTransactions              InventoryTransaction[]
-  studentBillings                    StudentBilling[]
-  studentJournalTransfers            StudentJournalTransfer[]
-  studentSubjectRegistrations        StudentSubjectRegistration[]
-  studentAssessmentScores            StudentAssessmentScore[]
-  studentBehaviouralAssessmentScores StudentBehaviouralAssessmentScore[]
-  assessmentRemarks                  AssessmentRemarks[]
-  studentAssignments                 StudentAssignment[]
-  attendanceRecords                  AttendanceRecord[]
-  studentTransports                  StudentTransport[]
-  studentTransportationRegisters     StudentTransportationRegister[]
-
-  @@index([classId])
-  @@index([createdById])
-  @@index([status, classId, subClassId])
-  @@map("students")
-}
-
-model Term {
-  id        String   @id @default(uuid()) @db.Char(36)
-  name      String
-  status    Status   @default(Active)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  activePeriods                      ActivePeriod[]
-  inventoryTransactions              InventoryTransaction[]
-  defaultBillingPeriods              DefaultBillingPeriod[]
-  classAssessmentTemplates           ClassAssessmentTemplate[]
-  studentSubjectRegistrations        StudentSubjectRegistration[]
-  studentAssessmentScores            StudentAssessmentScore[]
-  classSubjects                      ClassSubject[]
-  studentBehaviouralAssessmentScores StudentBehaviouralAssessmentScore[]
-  assessmentRemarks                  AssessmentRemarks[]
-  assignments                        Assignment[]
-  studentAssignments                 StudentAssignment[]
-  teacherSubjects                    TeacherSubjects[]
-  attendanceRecords                  AttendanceRecord[]
-  studentTransports                  StudentTransport[]
-
-  @@unique([name])
-  @@map("terms")
-}
-
-model Session {
-  id                                 String                              @id @default(uuid()) @db.Char(36)
-  name                               String                              @unique
-  status                             Status                              @default(Active)
-  createdAt                          DateTime                            @default(now()) @map("created_at")
-  activePeriods                      ActivePeriod[]
-  inventoryTransactions              InventoryTransaction[]
-  defaultBillingPeriods              DefaultBillingPeriod[]
-  classAssessmentTemplates           ClassAssessmentTemplate[]
-  classSubjects                      ClassSubject[]
-  studentSubjectRegistrations        StudentSubjectRegistration[]
-  studentAssessmentScores            StudentAssessmentScore[]
-  studentBehaviouralAssessmentScores StudentBehaviouralAssessmentScore[]
-  assessmentRemarks                  AssessmentRemarks[]
-  assignments                        Assignment[]
-  studentAssignments                 StudentAssignment[]
-  teacherSubjects                    TeacherSubjects[]
-  attendanceRecords                  AttendanceRecord[]
-  studentTransports                  StudentTransport[]
-
-  @@map("sessions")
 }
 
 model ActivePeriod {
   id        String   @id @default(uuid()) @db.Char(36)
   startDate DateTime @map("start_date") @db.Date
   endDate   DateTime @map("end_date") @db.Date
-  sessionId String   @map("session_id") @db.Char(36)
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId    String   @map("term_id") @db.Char(36)
-  term      Term     @relation(fields: [termId], references: [id], onDelete: Restrict)
   updatedAt DateTime @default(now()) @map("updated_at")
 
   @@map("active_period")
-}
-
-model DefaultBillingPeriod {
-  id        String   @id @default(uuid()) @db.Char(36)
-  startDate DateTime @map("start_date") @db.Date
-  endDate   DateTime @map("end_date") @db.Date
-  sessionId String   @map("session_id") @db.Char(36)
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId    String   @map("term_id") @db.Char(36)
-  term      Term     @relation(fields: [termId], references: [id], onDelete: Restrict)
-  updatedAt DateTime @default(now()) @map("updated_at")
-
-  @@map("default_billing_period")
 }
 
 enum EmploymentType {
@@ -664,169 +375,43 @@ enum EmploymentType {
 }
 
 model Staff {
-  id                            String                         @id @default(uuid()) @db.Char(36)
-  StaffNumber                   String                         @unique @map("staff_number") @db.VarChar(50)
-  email                         String                         @unique
-  name                          String
-  position                      StaffPosition                  @default(teacher)
-  employmentType                EmploymentType                 @default(Permanent)
-  status                        Status                         @default(Active)
-  profileImageUrl               String?                        @map("profile_image_url")
-  createdById                   String                         @map("created_by") @db.Char(36)
-  createdAt                     DateTime                       @default(now()) @map("created_at")
-  updatedAt                     DateTime                       @default(now()) @map("updated_at")
-  gradeLevelId                  String?                        @map("grade_level_id") @db.Char(36)
-  gradeLevel                    GradeLevel?                    @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
-  step                          Int                            @default(0) @map("step")
-  salary                        Decimal                        @default(0) @map("salary") @db.Decimal(12, 2)
-  createdBy                     User                           @relation("StaffCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  departmentId                  String?                        @map("department_id") @db.Char(36)
-  department                    Department?                    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  userId                        String?                        @unique @db.Char(36)
-  user                          User?                          @relation("StaffUser", fields: [userId], references: [id], onDelete: SetNull)
-  inventoryTransactions         InventoryTransaction[]
-  cashiers                      Cashier[]
-  staffBankDetails              StaffBankDetails[]
-  dateOfBirth                   DateTime?                      @map("date_of_birth") @db.Date
-  dateOfAppointment             DateTime?                      @map("date_of_appointment") @db.Date
-  dateOfResignation             DateTime?                      @map("date_of_resignation") @db.Date
-  dateOfTermination             DateTime?                      @map("date_of_termination") @db.Date
-  staffJournalTransfers         StaffJournalTransfer[]
+  id              String         @id @default(uuid()) @db.Char(36)
+  StaffNumber     String         @unique @map("staff_number") @db.VarChar(50)
+  email           String         @unique
+  name            String
+  position        StaffPosition  @default(teacher)
+  employmentType  EmploymentType @default(Permanent)
+  status          Status         @default(Active)
+  profileImageUrl String?        @map("profile_image_url")
+  createdById     String         @map("created_by") @db.Char(36)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @map("updated_at")
+  gradeLevelId    String?        @map("grade_level_id") @db.Char(36)
+  gradeLevel      GradeLevel?    @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  step            Int            @default(0) @map("step")
+  salary          Decimal        @default(0) @map("salary") @db.Decimal(12, 2)
+  createdBy       User           @relation("StaffCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  departmentId    String?        @map("department_id") @db.Char(36)
+  department      Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  userId          String?        @unique @db.Char(36)
+  user            User?          @relation("StaffUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  cashiers Cashier[]
+
+  dateOfBirth       DateTime? @map("date_of_birth") @db.Date
+  dateOfAppointment DateTime? @map("date_of_appointment") @db.Date
+  dateOfResignation DateTime? @map("date_of_resignation") @db.Date
+  dateOfTermination DateTime? @map("date_of_termination") @db.Date
+
   staffSalaryOverrideComponents StaffSalaryOverrideComponent[]
   payrollProcesses              PayrollProcess[]
-  teacherSubjects               TeacherSubjects[]
-  vehicles                      Vehicle[]
-  vehicleTrips                  VehicleTrip[]
-  tripSupportStaffs             TripSupportStaff[]
+
+  vehicles Vehicle[]
 
   @@index([userId])
   @@index([StaffNumber])
   @@index([createdById])
   @@map("staffs")
-}
-
-model InventoryTransaction {
-  id               String                     @id @default(uuid()) @db.Char(36)
-  itemId           String                     @map("item_id") @db.Char(36)
-  supplierId       String?                    @map("supplier_id") @db.Char(36)
-  receiverId       String?                    @map("receiver_id") @db.Char(36)
-  supplierReceiver String?                    @map("supplier_receiver")
-  transactionType  InventoryTransactionType   @map("transaction_type")
-  qtyIn            Decimal                    @default(0) @map("qty_in") @db.Decimal(12, 2)
-  inCost           Decimal                    @default(0) @map("in_cost") @db.Decimal(12, 2)
-  qtyOut           Decimal                    @default(0) @map("qty_out") @db.Decimal(12, 2)
-  outCost          Decimal                    @default(0) @map("out_cost") @db.Decimal(12, 2)
-  amountPaid       Decimal                    @default(0) @map("amount_paid") @db.Decimal(12, 2)
-  status           InventoryTransactionStatus @default(pending)
-  referenceNo      String?                    @map("reference_no")
-  notes            String?
-  studentId        String?                    @map("student_id") @db.Char(36)
-  student          Student?                   @relation(fields: [studentId], references: [id], onDelete: SetNull)
-  classId          String?                    @map("class_id") @db.Char(36)
-  sessionId        String?                    @map("session_id") @db.Char(36)
-  session          Session?                   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-  termId           String?                    @map("term_id") @db.Char(36)
-  term             Term?                      @relation(fields: [termId], references: [id], onDelete: SetNull)
-  subclassId       String?                    @map("subclass_id") @db.Char(36)
-  subclass         SubClass?                  @relation(fields: [subclassId], references: [id], onDelete: SetNull)
-  staffId          String?                    @map("staff_id") @db.Char(36)
-  staff            Staff?                     @relation(fields: [staffId], references: [id], onDelete: SetNull)
-  transactionDate  DateTime                   @default(now()) @map("transaction_date")
-  createdById      String                     @map("created_by") @db.Char(36)
-  createdAt        DateTime                   @default(now()) @map("created_at")
-  updatedAt        DateTime                   @default(now()) @map("updated_at")
-
-  item               InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  supplier           Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  receiver           User?         @relation("InventoryTransactionReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
-  createdBy          User          @relation("InventoryTransactionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  project            Project?      @relation("ProjectTransactions", fields: [projectId], references: [id])
-  projectId          String?       @db.Char(36)
-  hostelRoomId       String?       @map("hostel_room_id") @db.Char(36)
-  hostelRoom         HostelRoom?   @relation(fields: [hostelRoomId], references: [id], onDelete: SetNull)
-  hostelId           String?       @map("hostel_id") @db.Char(36)
-  hostel             Hostel?       @relation(fields: [hostelId], references: [id], onDelete: SetNull)
-  storeId            String?       @map("store_id") @db.Char(36)
-  store              Store?        @relation(fields: [storeId], references: [id], onDelete: SetNull)
-  facilityId         String?       @map("facility_id") @db.Char(36)
-  facility           Facility?     @relation(fields: [facilityId], references: [id], onDelete: SetNull)
-  isAcknowledged     Boolean       @default(false) @map("is_acknowledged")
-  acknowledgedAt     DateTime?     @map("acknowledged_at") @db.DateTime
-  acknowledgedBy     String?       @map("acknowledged_by") @db.Char(36)
-  acknowledgedByUser User?         @relation(fields: [acknowledgedBy], references: [id], onDelete: SetNull)
-  customerMame       String?       @map("customer_name")
-
-  @@index([itemId])
-  @@index([supplierId])
-  @@index([receiverId])
-  @@index([createdById])
-  @@index([facilityId])
-  @@index([projectId])
-  @@map("inventory_transactions")
-}
-
-model Project {
-  id                      String                   @id @default(uuid()) @db.Char(36)
-  name                    String
-  description             String?
-  status                  Status                   @default(Active)
-  createdAt               DateTime                 @default(now()) @map("created_at")
-  updatedAt               DateTime                 @default(now()) @map("updated_at")
-  inventoryTransactions   InventoryTransaction[]   @relation("ProjectTransactions")
-  accountTransactions     AccountTransaction[]
-  tempJournalTransfers    TempJournalTransfer[]
-  CreatedBy               User?                    @relation("ProjectCreatedBy", fields: [createdById], references: [id])
-  createdById             String?                  @map("created_by") @db.Char(36)
-  studentJournalTransfers StudentJournalTransfer[]
-
-  @@map("projects")
-}
-
-model Facility {
-  id          String   @id @default(uuid()) @db.Char(36)
-  name        String
-  description String?
-  status      Status   @default(Active)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @map("updated_at")
-  createdById String?  @map("created_by") @db.Char(36)
-  CreatedBy   User?    @relation("FacilityCreatedBy", fields: [createdById], references: [id])
-
-  inventoryTransactions InventoryTransaction[]
-
-  @@index([createdById])
-  @@map("facilities")
-}
-
-model Store {
-  id                    String                 @id @default(uuid()) @db.Char(36)
-  name                  String                 @unique
-  description           String?
-  status                Status                 @default(Active)
-  managerId             String?                @map("manager_id") @db.Char(36)
-  manager               User?                  @relation("StoreManager", fields: [managerId], references: [id])
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @default(now()) @map("updated_at")
-  inventoryTransactions InventoryTransaction[]
-  /**
-   * Users granted access to this store (many-to-many).
-   */
-  userAccesses          UserStore[]
-
-  @@map("stores")
-}
-
-/// Join table: which users may access which stores (M:N). Distinct from `Store.managerId` (primary manager).
-model UserStore {
-  userId    String   @map("user_id") @db.Char(36)
-  storeId   String   @map("store_id") @db.Char(36)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@id([userId, storeId])
-  @@index([storeId])
-  @@map("user_stores")
 }
 
 /// Chart of accounts: top-level group (e.g. Assets, Liabilities).
@@ -902,21 +487,15 @@ model AccountChart {
   rank               Int
   createdAt          DateTime @default(now()) @map("created_at")
 
-  group                           AccountGroup                     @relation(fields: [groupId], references: [id], onDelete: Restrict)
-  head                            AccountHead                      @relation(fields: [headId], references: [id], onDelete: Restrict)
-  subhead                         AccountSubhead                   @relation(fields: [subheadId], references: [id], onDelete: Restrict)
-  accountTransactions             AccountTransaction[]
-  tempJournalTransfers            TempJournalTransfer[]
-  defaultAccountSettings          DefaultAccountSettings[]
-  concessionDiscounts             ConcessionDiscount[]
-  billingItems                    BillingItem[]
-  students                        Student[]
-  consumableCategories            Category[]                       @relation("CategoryConsumableAccount")
-  assetCategories                 Category[]                       @relation("CategoryAssetAccount")
-  studentJournalTransfers         StudentJournalTransfer[]
+  group                  AccountGroup             @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  head                   AccountHead              @relation(fields: [headId], references: [id], onDelete: Restrict)
+  subhead                AccountSubhead           @relation(fields: [subheadId], references: [id], onDelete: Restrict)
+  accountTransactions    AccountTransaction[]
+  tempJournalTransfers   TempJournalTransfer[]
+  defaultAccountSettings DefaultAccountSettings[]
   // suppliers               Supplier[]
-  cashiers                        Cashier[]
-  staffJournalTransfers           StaffJournalTransfer[]
+  cashiers               Cashier[]
+
   salaryComponents                SalaryComponent[]
   administrativeExpenseComponents AdministrativeExpenseComponent[]
 
@@ -949,7 +528,6 @@ model AccountTransaction {
   head    AccountHead    @relation(fields: [headId], references: [id], onDelete: Restrict)
   subhead AccountSubhead @relation(fields: [subheadId], references: [id], onDelete: Restrict)
   account AccountChart   @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  project Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([groupId])
   @@index([headId])
@@ -985,46 +563,12 @@ model TempJournalTransfer {
   createdBy         User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   account AccountChart @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  project Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([accountId])
   @@index([projectId])
   @@index([transactionDate])
   @@index([batchStatus])
   @@map("temp_journal_transfer")
-}
-
-model StudentJournalTransfer {
-  id                Int                 @id @default(autoincrement())
-  transType         JournalTransferType @map("transaction_type")
-  studentId         String              @map("student_id") @db.Char(36)
-  student           Student?            @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  accountId         Int                 @map("accountid")
-  debit             Decimal             @default(0) @db.Decimal(14, 2)
-  credit            Decimal             @default(0) @db.Decimal(14, 2)
-  status            Status              @default(Active)
-  batchStatus       BatchStatus         @default(Pending) @map("batch_status")
-  referenceNo       String?             @map("reference_no")
-  manualReferenceNo String?             @map("manual_reference_no")
-  transactionDate   DateTime            @map("transaction_date")
-  postedAt          DateTime?           @map("posted_at")
-  postedBy          String?             @map("posted_by")
-  remarks           String?             @map("remarks")
-  createdAt         DateTime            @default(now()) @map("created_at")
-  finalPostedAt     DateTime?           @map("final_posted_at")
-  finalPostedBy     String?             @map("final_posted_by")
-  updatedAt         DateTime            @default(now()) @map("updated_at")
-  createdById       String?             @map("created_by") @db.Char(36)
-  createdBy         User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  account           AccountChart        @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  project           Project?            @relation(fields: [projectId], references: [id])
-  projectId         String?             @db.Char(36)
-
-  @@index([studentId])
-  @@index([accountId])
-  @@index([transactionDate])
-  @@index([batchStatus])
-  @@map("student_journal_transfer")
 }
 
 model DefaulSubheadSettings {
@@ -1047,173 +591,7 @@ model DefaultAccountSettings {
   @@map("default_account_settings")
 }
 
-enum BillingItemCategory {
-  TUITION
-  MATERIALS
-  SERVICES
-  TRANSPORTATION
-  TECHNOLOGY
-  UTILITIES
-  CONSTRUCTION
-  FEEDING
-  MEDICAL
-  OTHER
-}
-
-model BillingItem {
-  id                   Int                               @id @default(autoincrement())
-  code                 String                            @unique
-  name                 String
-  category             BillingItemCategory
-  optional             Boolean                           @default(false)
-  status               Status                            @default(Active)
-  createdAt            DateTime                          @default(now()) @map("created_at")
-  updatedAt            DateTime                          @updatedAt @map("updated_at")
-  concessionLinks      BillingItemToConcessionDiscount[]
-  accountId            Int?                              @map("account_id")
-  account              AccountChart?                     @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  studentBillings      StudentBilling[]
-  classDefaultBillings ClassDefaultBilling[]
-
-  @@index([code])
-  @@index([category])
-  @@index([status])
-  @@map("billing_items")
-}
-
-enum ConcessionDiscountType {
-  CONCESSION
-  DISCOUNT
-}
-
-enum ConcessionDiscountCalculationType {
-  PERCENTAGE
-  FIXED_AMOUNT
-}
-
-model ConcessionDiscount {
-  id                         Int                               @id @default(autoincrement())
-  code                       String                            @unique
-  name                       String
-  type                       ConcessionDiscountType
-  calculationType            ConcessionDiscountCalculationType @map("calculation_type")
-  value                      Decimal                           @db.Decimal(14, 2)
-  billingItemLinks           BillingItemToConcessionDiscount[]
-  maxLimit                   Decimal?                          @map("max_limit") @db.Decimal(14, 2)
-  status                     Status                            @default(Active)
-  accountId                  Int?                              @map("account_id")
-  account                    AccountChart?                     @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  studentConcessionDiscounts StudentConcessionDiscount[]
-
-  @@index([code])
-  @@index([type])
-  @@index([calculationType])
-  @@index([status])
-  @@map("concession_discounts")
-}
-
 /// Explicit join table (replaces Prisma implicit `_BillingItemToConcessionDiscount`).
-model BillingItemToConcessionDiscount {
-  billingItemId        Int                @map("billing_item_id")
-  billingItem          BillingItem        @relation(fields: [billingItemId], references: [id], onDelete: Cascade)
-  concessionDiscountId Int                @map("concession_discount_id")
-  concessionDiscount   ConcessionDiscount @relation(fields: [concessionDiscountId], references: [id], onDelete: Cascade)
-
-  @@id([billingItemId, concessionDiscountId])
-  @@index([concessionDiscountId])
-  @@map("_billing_item_to_concession_discount")
-}
-
-enum StudentBillingStatus {
-  DRAFT
-  APPROVED
-  CANCELLED
-}
-
-model ClassDefaultBilling {
-  id         Int          @id @default(autoincrement())
-  classId    String       @map("class_id") @db.Char(36)
-  subclassId String?      @map("subclass_id") @db.Char(36)
-  session    String       @map("session") @db.Char(36)
-  term       String       @map("term") @db.Char(36)
-  billingId  Int          @map("billing_id")
-  billing    BillingItem? @relation(fields: [billingId], references: [id], onDelete: Restrict)
-  amount     Decimal      @db.Decimal(14, 2)
-
-  @@index([classId])
-  @@index([subclassId])
-  @@index([session])
-  @@index([term])
-  @@index([billingId])
-  @@map("class_default_billings")
-}
-
-model StudentBilling {
-  id         Int                  @id @default(autoincrement())
-  studentId  String               @map("student_id") @db.Char(36)
-  student    Student?             @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  classId    String               @map("class_id") @db.Char(36)
-  subclassId String?              @map("subclass_id") @db.Char(36)
-  session    String               @map("session") @db.Char(36)
-  term       String               @map("term") @db.Char(36)
-  billingId  Int                  @map("billing_id")
-  billing    BillingItem?         @relation(fields: [billingId], references: [id], onDelete: Restrict)
-  amount     Decimal              @db.Decimal(14, 2)
-  referentId String?              @map("referent_id")
-  isPosted   Boolean              @default(false)
-  status     StudentBillingStatus @default(DRAFT)
-  createdAt  DateTime             @default(now()) @map("created_at")
-  updatedAt  DateTime             @updatedAt @map("updated_at")
-  approvedAt DateTime?            @map("approved_at")
-  approvedBy String?              @map("approved_by") @db.Char(36)
-  createdBy  String?              @map("created_by") @db.Char(36)
-  postedAt   DateTime?            @map("posted_at")
-  postedBy   String?              @map("posted_by") @db.Char(36)
-
-  @@index([studentId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([session])
-  @@index([term])
-  @@index([billingId])
-  @@index([status])
-  @@index([approvedBy])
-  @@index([createdBy])
-  @@map("student_billings")
-}
-
-model StudentConcessionDiscount {
-  id                   Int                  @id @default(autoincrement())
-  studentId            String               @map("student_id") @db.Char(36)
-  classId              String               @map("class_id") @db.Char(36)
-  subclassId           String?              @map("subclass_id") @db.Char(36)
-  session              String               @map("session") @db.Char(36)
-  term                 String               @map("term") @db.Char(36)
-  concessionDiscountId Int                  @map("concession_discount_id")
-  concessionDiscount   ConcessionDiscount?  @relation(fields: [concessionDiscountId], references: [id], onDelete: Restrict)
-  amount               Decimal              @db.Decimal(14, 2)
-  referentId           String?              @map("referent_id")
-  status               StudentBillingStatus @default(DRAFT)
-  createdAt            DateTime             @default(now()) @map("created_at")
-  updatedAt            DateTime             @updatedAt @map("updated_at")
-  approvedAt           DateTime?            @map("approved_at")
-  approvedBy           String?              @map("approved_by") @db.Char(36)
-  createdBy            String?              @map("created_by") @db.Char(36)
-  isPosted             Boolean              @default(false)
-  postedAt             DateTime?            @map("posted_at")
-  postedBy             String?              @map("posted_by") @db.Char(36)
-
-  @@index([studentId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([session])
-  @@index([term])
-  @@index([concessionDiscountId])
-  @@index([status])
-  @@index([approvedBy])
-  @@index([createdBy])
-  @@map("student_concession_discounts")
-}
 
 model AuditLog {
   id String @id @default(uuid())
@@ -1289,52 +667,6 @@ model GradeLevel {
 
   @@index([id])
   @@map("grade_levels")
-}
-
-model StaffBankDetails {
-  id            String  @id @default(uuid()) @db.Char(36)
-  staffId       String  @map("staff_id") @db.Char(36)
-  staff         Staff   @relation(fields: [staffId], references: [id])
-  bankId        String  @map("bank_id") @db.Char(36)
-  bank          Bank    @relation(fields: [bankId], references: [id])
-  accountNumber String  @map("account_number")
-  isPrimary     Boolean @default(false) @map("is_primary")
-  status        Status  @default(Active)
-
-  @@index([staffId])
-  @@index([bankId])
-  @@map("staff_bank_details")
-}
-
-model StaffJournalTransfer {
-  id                Int                 @id @default(autoincrement())
-  transType         JournalTransferType @map("transaction_type")
-  staffId           String              @map("staff_id") @db.Char(36)
-  staff             Staff?              @relation(fields: [staffId], references: [id], onDelete: Restrict)
-  accountId         Int                 @map("accountid")
-  debit             Decimal             @default(0) @db.Decimal(14, 2)
-  credit            Decimal             @default(0) @db.Decimal(14, 2)
-  status            Status              @default(Active)
-  batchStatus       BatchStatus         @default(Pending) @map("batch_status")
-  referenceNo       String?             @map("reference_no")
-  manualReferenceNo String?             @map("manual_reference_no")
-  transactionDate   DateTime            @map("transaction_date")
-  postedAt          DateTime?           @map("posted_at")
-  postedBy          String?             @map("posted_by")
-  remarks           String?             @map("remarks")
-  createdAt         DateTime            @default(now()) @map("created_at")
-  finalPostedAt     DateTime?           @map("final_posted_at")
-  finalPostedBy     String?             @map("final_posted_by")
-  updatedAt         DateTime            @default(now()) @map("updated_at")
-  createdById       String?             @map("created_by") @db.Char(36)
-  createdBy         User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  account           AccountChart        @relation(fields: [accountId], references: [id], onDelete: Restrict)
-
-  @@index([staffId])
-  @@index([accountId])
-  @@index([transactionDate])
-  @@index([batchStatus])
-  @@map("staff_journal_transfer")
 }
 
 enum SalaryComponentType {
@@ -1522,481 +854,6 @@ model AdministrativeExpense {
   @@map("administrative_expenses")
 }
 
-model AssessmentTemplate {
-  id               String                    @id @default(uuid()) @db.Char(36)
-  name             String                    @map("name")
-  description      String?                   @map("description") @db.Text
-  versionId        String                    @map("version_id") @db.Char(36)
-  parentTemplateId String?                   @map("parent_template_id") @db.Char(36)
-  parentTemplate   AssessmentTemplate?       @relation("AssessmentTemplateVersions", fields: [parentTemplateId], references: [id], onDelete: SetNull)
-  childTemplates   AssessmentTemplate[]      @relation("AssessmentTemplateVersions")
-  status           Status                    @default(Active)
-  components       AssessmentComponent[]
-  classAssignments ClassAssessmentTemplate[]
-
-  @@index([versionId])
-  @@index([parentTemplateId])
-  @@index([status])
-  @@map("assessment_templates")
-}
-
-model AssessmentComponent {
-  id          String                   @id @default(uuid()) @db.Char(36)
-  templateId  String                   @map("template_id") @db.Char(36)
-  template    AssessmentTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  name        String                   @map("name")
-  shortName   String?                  @map("short_name")
-  maxScore    Decimal                  @map("max_score") @db.Decimal(8, 2)
-  weight      Decimal                  @map("weight") @db.Decimal(8, 2)
-  orderNo     Int                      @map("order_no")
-  status      Status                   @default(Active)
-  isLocked    Boolean                  @default(false) @map("is_locked")
-  scores      StudentAssessmentScore[]
-  assignments Assignment[]
-
-  @@index([templateId])
-  @@index([status])
-  @@index([templateId, orderNo])
-  @@map("assessment_components")
-}
-
-model ClassAssessmentTemplate {
-  id                           String                         @id @default(uuid()) @db.Char(36)
-  classId                      String                         @map("class_id") @db.Char(36)
-  class                        SchoolClass                    @relation(fields: [classId], references: [id], onDelete: Restrict)
-  templateId                   String                         @map("template_id") @db.Char(36)
-  template                     AssessmentTemplate             @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  sessionId                    String                         @map("session_id") @db.Char(36)
-  session                      Session                        @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId                       String                         @map("term_id") @db.Char(36)
-  term                         Term                           @relation(fields: [termId], references: [id], onDelete: Restrict)
-  gradeTemplateId              String?                        @map("grade_template_id") @db.Char(36)
-  gradeTemplate                GradingTemplate?               @relation(fields: [gradeTemplateId], references: [id], onDelete: SetNull)
-  behaviouralTemplateId        String?                        @map("behavioural_template_id") @db.Char(36)
-  behaviouralTemplate          BehaviouralAssessmentTemplate? @relation(fields: [behaviouralTemplateId], references: [id], onDelete: SetNull)
-  behaviouralGradingTemplateId String?                        @map("behavioural_grading_template_id") @db.Char(36)
-  behaviouralGradingTemplate   BehaviouralGradingTemplate?    @relation(fields: [behaviouralGradingTemplateId], references: [id], onDelete: SetNull)
-  createdAt                    DateTime                       @default(now()) @map("created_at")
-
-  @@unique([classId, templateId, sessionId, termId])
-  @@index([classId])
-  @@index([templateId])
-  @@index([sessionId])
-  @@index([termId])
-  @@index([gradeTemplateId])
-  @@index([classId, templateId, sessionId, termId, gradeTemplateId])
-  @@map("class_assessment_templates")
-}
-
-model Subject {
-  id                          String                       @id @default(uuid()) @db.Char(36)
-  code                        String                       @unique @map("code")
-  name                        String                       @map("name")
-  status                      Status                       @default(Active)
-  classSubjects               ClassSubject[]
-  studentSubjectRegistrations StudentSubjectRegistration[]
-  studentAssessmentScores     StudentAssessmentScore[]
-  assignments                 Assignment[]
-  teacherSubjects             TeacherSubjects[]
-
-  @@index([status])
-  @@map("subjects")
-}
-
-model ClassSubject {
-  id         String      @id @default(uuid()) @db.Char(36)
-  classId    String      @map("class_id") @db.Char(36)
-  class      SchoolClass @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subclassId String?     @map("subclass_id") @db.Char(36)
-  subclass   SubClass?   @relation(fields: [subclassId], references: [id], onDelete: SetNull)
-  subjectId  String      @map("subject_id") @db.Char(36)
-  subject    Subject     @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  sessionId  String      @map("session_id") @db.Char(36)
-  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId     String?     @map("term_id") @db.Char(36)
-  term       Term?       @relation(fields: [termId], references: [id], onDelete: Restrict)
-
-  @@unique([classId, subclassId, subjectId, sessionId, termId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([subjectId])
-  @@index([sessionId])
-  @@index([termId])
-  @@map("class_subjects")
-}
-
-model StudentSubjectRegistration {
-  id         String                   @id @default(uuid()) @db.Char(36)
-  studentId  String                   @map("student_id") @db.Char(36)
-  student    Student                  @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  classId    String                   @map("class_id") @db.Char(36)
-  class      SchoolClass              @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subclassId String?                  @map("subclass_id") @db.Char(36)
-  subclass   SubClass?                @relation(fields: [subclassId], references: [id], onDelete: SetNull)
-  subjectId  String                   @map("subject_id") @db.Char(36)
-  subject    Subject                  @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  sessionId  String                   @map("session_id") @db.Char(36)
-  session    Session                  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId     String                   @map("term_id") @db.Char(36)
-  term       Term                     @relation(fields: [termId], references: [id], onDelete: Restrict)
-  scores     StudentAssessmentScore[]
-
-  @@unique([studentId, subjectId, sessionId, termId])
-  @@index([studentId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([subjectId])
-  @@index([sessionId])
-  @@index([termId])
-  @@map("student_subject_registrations")
-}
-
-model StudentAssessmentScore {
-  id                           String                     @id @default(uuid()) @db.Char(36)
-  studentSubjectRegistrationId String                     @map("student_subject_registration_id") @db.Char(36)
-  studentSubjectRegistration   StudentSubjectRegistration @relation(fields: [studentSubjectRegistrationId], references: [id], onDelete: Restrict)
-  classId                      String                     @map("class_id") @db.Char(36)
-  class                        SchoolClass                @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subclassId                   String?                    @map("subclass_id") @db.Char(36)
-  subclass                     SubClass?                  @relation(fields: [subclassId], references: [id], onDelete: SetNull)
-  subjectId                    String                     @map("subject_id") @db.Char(36)
-  subject                      Subject                    @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  componentId                  String                     @map("component_id") @db.Char(36)
-  component                    AssessmentComponent        @relation(fields: [componentId], references: [id], onDelete: Restrict)
-  termId                       String                     @map("term_id") @db.Char(36)
-  term                         Term                       @relation(fields: [termId], references: [id], onDelete: Restrict)
-  sessionId                    String                     @map("session_id") @db.Char(36)
-  session                      Session                    @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  score                        Decimal                    @map("score") @db.Decimal(8, 2)
-  studentId                    String?                    @map("student_id") @db.Char(36)
-  student                      Student?                   @relation(fields: [studentId], references: [id], onDelete: Restrict)
-
-  @@unique([studentSubjectRegistrationId, componentId])
-  @@index([studentSubjectRegistrationId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([subjectId])
-  @@index([componentId])
-  @@index([termId])
-  @@index([sessionId])
-  @@index([classId, subjectId, sessionId, termId])
-  @@map("student_assessment_scores")
-}
-
-model GradingTemplate {
-  id          String                @id @default(uuid()) @db.Char(36)
-  name        String                @map("name")
-  description String?               @map("description") @db.Text
-  version     Int                   @default(1) @map("version")
-  isLocked    Boolean               @default(false) @map("is_locked")
-  parentId    String?               @map("parent_id") @db.Char(36)
-  parent      GradingTemplate?      @relation("GradingTemplateVersions", fields: [parentId], references: [id], onDelete: SetNull)
-  children    GradingTemplate[]     @relation("GradingTemplateVersions")
-  items       GradingTemplateItem[]
-
-  classAssessmentTemplates ClassAssessmentTemplate[]
-
-  @@index([version])
-  @@index([parentId])
-  @@index([isLocked])
-  @@map("grading_templates")
-}
-
-model GradingTemplateItem {
-  id                String          @id @default(uuid()) @db.Char(36)
-  gradingTemplateId String          @map("grading_template_id") @db.Char(36)
-  gradingTemplate   GradingTemplate @relation(fields: [gradingTemplateId], references: [id], onDelete: Restrict)
-  grade             String          @map("grade")
-  minScore          Decimal         @map("min_score") @db.Decimal(8, 2)
-  maxScore          Decimal         @map("max_score") @db.Decimal(8, 2)
-  remark            String?         @map("remark")
-  gradePoint        Decimal         @map("grade_point") @db.Decimal(6, 2)
-
-  @@unique([gradingTemplateId, grade])
-  @@index([gradingTemplateId])
-  @@index([gradingTemplateId, minScore, maxScore])
-  @@map("grading_template_items")
-}
-
-model BehaviouralAssessmentTemplate {
-  id                              String                           @id @default(uuid()) @db.Char(36)
-  name                            String                           @map("name")
-  description                     String?                          @map("description") @db.Text
-  version                         Int                              @default(1) @map("version")
-  isLocked                        Boolean                          @default(false) @map("is_locked")
-  parentId                        String?                          @map("parent_id") @db.Char(36)
-  parent                          BehaviouralAssessmentTemplate?   @relation("BehaviouralAssessmentTemplateVersions", fields: [parentId], references: [id], onDelete: SetNull)
-  children                        BehaviouralAssessmentTemplate[]  @relation("BehaviouralAssessmentTemplateVersions")
-  behaviouralAssessmentComponents BehaviouralAssessmentComponent[]
-  status                          Status                           @default(Active)
-  classAssessmentTemplates        ClassAssessmentTemplate[]
-
-  @@map("behavioural_assessment_templates")
-}
-
-model BehaviouralAssessmentComponent {
-  id                                 String                              @id @default(uuid()) @db.Char(36)
-  behaviourTemplateId                String                              @map("template_id") @db.Char(36)
-  behaviourTemplate                  BehaviouralAssessmentTemplate       @relation(fields: [behaviourTemplateId], references: [id], onDelete: Restrict)
-  name                               String                              @map("name")
-  maxScore                           Decimal                             @default(5) @map("max_score") @db.Decimal(8, 2)
-  orderNo                            Int                                 @map("order_no")
-  status                             Status                              @default(Active)
-  studentBehaviouralAssessmentScores StudentBehaviouralAssessmentScore[]
-
-  @@map("behavioural_assessment_components")
-}
-
-model StudentBehaviouralAssessmentScore {
-  id                               String                         @id @default(uuid()) @db.Char(36)
-  studentId                        String                         @map("student_id") @db.Char(36)
-  student                          Student                        @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  behaviouralAssessmentComponentId String                         @map("behavioural_assessment_component_id") @db.Char(36)
-  behaviouralAssessmentComponent   BehaviouralAssessmentComponent @relation(fields: [behaviouralAssessmentComponentId], references: [id], onDelete: Restrict)
-  score                            Decimal                        @map("score") @db.Decimal(8, 2)
-  classId                          String                         @map("class_id") @db.Char(36)
-  class                            SchoolClass                    @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subclassId                       String                         @map("subclass_id") @db.Char(36)
-  subclass                         SubClass                       @relation(fields: [subclassId], references: [id], onDelete: Restrict)
-  sessionId                        String                         @map("session_id") @db.Char(36)
-  session                          Session                        @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId                           String                         @map("term_id") @db.Char(36)
-  term                             Term                           @relation(fields: [termId], references: [id], onDelete: Restrict)
-
-  @@map("student_behavioural_assessment_scores")
-}
-
-model BehaviouralGradingItem {
-  id                           String                      @id @default(uuid()) @db.Char(36)
-  lowBoundary                  Decimal                     @map("low_boundary") @db.Decimal(8, 2)
-  highBoundary                 Decimal                     @map("high_boundary") @db.Decimal(8, 2)
-  grade                        String                      @map("grade")
-  remark                       String?                     @map("remark") @db.Text
-  gradePoint                   Decimal                     @map("grade_point") @db.Decimal(6, 2)
-  behaviouralGradingTemplate   BehaviouralGradingTemplate? @relation(fields: [behaviouralGradingTemplateId], references: [id])
-  behaviouralGradingTemplateId String?                     @db.Char(36)
-
-  @@index([behaviouralGradingTemplateId])
-  @@map("behavioural_grading_items")
-}
-
-model BehaviouralGradingTemplate {
-  id                       String                       @id @default(uuid()) @db.Char(36)
-  name                     String                       @map("name")
-  description              String?                      @map("description") @db.Text
-  version                  Int                          @default(1) @map("version")
-  isLocked                 Boolean                      @default(false) @map("is_locked")
-  parentId                 String?                      @map("parent_id") @db.Char(36)
-  parent                   BehaviouralGradingTemplate?  @relation("BehaviouralGradingTemplateVersions", fields: [parentId], references: [id], onDelete: SetNull)
-  children                 BehaviouralGradingTemplate[] @relation("BehaviouralGradingTemplateVersions")
-  gradingItems             BehaviouralGradingItem[]
-  status                   Status                       @default(Active)
-  classAssessmentTemplates ClassAssessmentTemplate[]
-
-  @@map("behavioural_grading_templates")
-}
-
-model AssessmentRemarks {
-  id                 String      @id @default(uuid()) @db.Char(36)
-  studentId          String      @map("student_id") @db.Char(36)
-  student            Student     @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  teacherRemark      String?     @map("teacher_remark") @db.Text
-  parentRemark       String?     @map("parent_remark") @db.Text
-  principalRemark    String?     @map("principal_remark") @db.Text
-  headTeacherRemark  String?     @map("head_teacher_remark") @db.Text
-  classTeacherRemark String?     @map("class_teacher_remark") @db.Text
-  otherRemark        String?     @map("other_remark") @db.Text
-  classId            String      @map("class_id") @db.Char(36)
-  class              SchoolClass @relation(fields: [classId], references: [id], onDelete: Restrict)
-  term               Term?       @relation(fields: [termId], references: [id])
-  termId             String?     @db.Char(36)
-  session            Session?    @relation(fields: [sessionId], references: [id])
-  sessionId          String?     @db.Char(36)
-
-  @@unique([studentId, classId, sessionId])
-  @@map("assessment_remarks")
-}
-
-model DefaultClassRemarkSetup {
-  id                 String      @id @default(uuid()) @db.Char(36)
-  classId            String      @map("class_id") @db.Char(36)
-  class              SchoolClass @relation(fields: [classId], references: [id], onDelete: Restrict)
-  teacherRemark      String      @map("teacher_remark") @db.Text
-  parentRemark       String?     @map("parent_remark") @db.Text
-  principalRemark    String?     @map("principal_remark") @db.Text
-  headTeacherRemark  String?     @map("head_teacher_remark") @db.Text
-  classTeacherRemark String?     @map("class_teacher_remark") @db.Text
-  otherRemark        String?     @map("other_remark") @db.Text
-  lowerBoundary      Decimal     @map("lower_boundary") @db.Decimal(8, 2) // this is measured by student overall avage score in all subject offered
-  upperBoundary      Decimal     @map("upper_boundary") @db.Decimal(8, 2) // this is measured by student overall avage score in all subject offered
-
-  @@unique([classId, lowerBoundary, upperBoundary])
-  @@map("default_class_remark_setups")
-}
-
-enum AssignmentStatus {
-  Pending
-  Submitted
-  Graded
-}
-
-enum AttendanceStatus {
-  Present
-  Absent
-  Late
-  Excused
-  HalfDay
-}
-
-model Assignment {
-  id                    String               @id @default(uuid()) @db.Char(36)
-  topic                 String               @map("topic")
-  question              String               @map("question") @db.Text
-  classId               String               @map("class_id") @db.Char(36)
-  class                 SchoolClass          @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subjectId             String               @map("subject_id") @db.Char(36)
-  subject               Subject              @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  sessionId             String               @map("session_id") @db.Char(36)
-  session               Session              @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId                String               @map("term_id") @db.Char(36)
-  term                  Term                 @relation(fields: [termId], references: [id], onDelete: Restrict)
-  assignmentComponentId String?              @map("assignment_component_id") @db.Char(36)
-  assignmentComponent   AssessmentComponent? @relation(fields: [assignmentComponentId], references: [id], onDelete: SetNull)
-  deadline              DateTime?            @map("deadline")
-  status                AssignmentStatus     @default(Pending)
-  createdById           String               @map("created_by") @db.Char(36)
-  createdBy             User                 @relation("AssignmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  createdAt             DateTime             @default(now()) @map("created_at")
-  updatedAt             DateTime             @updatedAt @map("updated_at")
-
-  attachments        AssignmentAttachment[]
-  studentAssignments StudentAssignment[]
-
-  @@index([classId])
-  @@index([subjectId])
-  @@index([sessionId])
-  @@index([termId])
-  @@index([assignmentComponentId])
-  @@index([createdById])
-  @@index([classId, subjectId, sessionId, termId])
-  @@map("assignments")
-}
-
-model AssignmentAttachment {
-  id           String     @id @default(uuid()) @db.Char(36)
-  assignmentId String     @map("assignment_id") @db.Char(36)
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  url          String     @map("url") @db.Text
-  createdAt    DateTime   @default(now()) @map("created_at")
-
-  @@index([assignmentId])
-  @@map("assignment_attachments")
-}
-
-model StudentAssignment {
-  id           String           @id @default(uuid()) @db.Char(36)
-  assignmentId String           @map("assignment_id") @db.Char(36)
-  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
-  answer       String?          @map("answer") @db.Text
-  studentId    String           @map("student_id") @db.Char(36)
-  student      Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  classId      String           @map("class_id") @db.Char(36)
-  class        SchoolClass      @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subclassId   String?          @map("subclass_id") @db.Char(36)
-  subclass     SubClass?        @relation(fields: [subclassId], references: [id], onDelete: SetNull)
-  sessionId    String           @map("session_id") @db.Char(36)
-  session      Session          @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId       String           @map("term_id") @db.Char(36)
-  term         Term             @relation(fields: [termId], references: [id], onDelete: Restrict)
-  score        Decimal?         @map("score") @db.Decimal(8, 2)
-  status       AssignmentStatus @default(Pending)
-  submittedAt  DateTime?        @map("submitted_at")
-  gradedAt     DateTime?        @map("graded_at")
-  gradedBy     String?          @map("graded_by") @db.Char(36)
-  gradedByUser User?            @relation(fields: [gradedBy], references: [id], onDelete: SetNull)
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
-
-  attachments StudentAssignmentAttachment[]
-
-  @@unique([studentId, assignmentId, sessionId, termId])
-  @@index([studentId])
-  @@index([assignmentId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([sessionId])
-  @@index([termId])
-  @@map("student_assignments")
-}
-
-model StudentAssignmentAttachment {
-  id                  String            @id @default(uuid()) @db.Char(36)
-  studentAssignmentId String            @map("student_assignment_id") @db.Char(36)
-  studentAssignment   StudentAssignment @relation(fields: [studentAssignmentId], references: [id], onDelete: Cascade)
-  url                 String            @map("url") @db.Text
-  createdAt           DateTime          @default(now()) @map("created_at")
-
-  @@index([studentAssignmentId])
-  @@map("student_assignment_attachments")
-}
-
-model TeacherSubjects {
-  id         String      @id @default(uuid()) @db.Char(36)
-  staffId    String      @map("staff_id") @db.Char(36)
-  staff      Staff       @relation(fields: [staffId], references: [id], onDelete: Restrict)
-  subjectId  String      @map("subject_id") @db.Char(36)
-  classId    String      @map("class_id") @db.Char(36)
-  subclassId String?     @map("subclass_id") @db.Char(36)
-  sessionId  String      @map("session_id") @db.Char(36)
-  termId     String      @map("term_id") @db.Char(36)
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @default(now()) @map("updated_at")
-  subject    Subject     @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  class      SchoolClass @relation(fields: [classId], references: [id], onDelete: Restrict)
-  subclass   SubClass?   @relation(fields: [subclassId], references: [id], onDelete: SetNull)
-  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  term       Term        @relation(fields: [termId], references: [id], onDelete: Restrict)
-  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userId     String?     @db.Char(36)
-
-  @@unique([staffId, subjectId, classId, subclassId, sessionId, termId])
-  @@index([staffId])
-  @@index([subjectId])
-  @@index([classId])
-  @@index([subclassId])
-  @@index([sessionId])
-  @@index([termId])
-  @@map("teacher_subjects")
-}
-
-model AttendanceRecord {
-  id             String           @id @default(uuid()) @db.Char(36)
-  sessionId      String           @map("session_id") @db.Char(36)
-  session        Session          @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId         String           @map("term_id") @db.Char(36)
-  term           Term             @relation(fields: [termId], references: [id], onDelete: Restrict)
-  studentId      String           @map("student_id") @db.Char(36)
-  student        Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  status         AttendanceStatus @default(Present)
-  attendanceDate DateTime         @map("attendance_date") @db.Date
-  checkInTime    DateTime         @map("check_in_time")
-  checkOutTime   DateTime?        @map("check_out_time")
-  markedById     String           @map("marked_by") @db.Char(36)
-  markedBy       User             @relation("AttendanceMarkedBy", fields: [markedById], references: [id], onDelete: Restrict)
-  latitude       Decimal?         @db.Decimal(10, 8)
-  longitude      Decimal?         @db.Decimal(11, 8)
-  remarks        String?          @db.Text
-  createdAt      DateTime         @default(now()) @map("created_at")
-
-  @@unique([studentId, attendanceDate])
-  @@index([sessionId])
-  @@index([termId])
-  @@index([studentId])
-  @@index([markedById])
-  @@index([attendanceDate])
-  @@map("attendance_records")
-}
-
 enum VehicleType {
   Car
   Bus
@@ -2026,215 +883,9 @@ model Vehicle {
   createdById   String         @map("created_by") @db.Char(36)
   user          User?          @relation(fields: [userId], references: [id])
   userId        String?        @db.Char(36)
-  vehicleRoutes VehicleRoute[]
-  vehicleTrips  VehicleTrip[]
 
   @@unique([vehicleNumber])
   @@index([vehicleNumber])
   @@index([vehicleType])
   @@map("vehicles")
-}
-
-model VehicleRoute {
-  id        String   @id @default(uuid()) @db.Char(36)
-  vehicleId String   @map("vehicle_id") @db.Char(36)
-  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
-  routeId   String   @map("route_id") @db.Char(36)
-  route     Route    @relation(fields: [routeId], references: [id], onDelete: Restrict)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([vehicleId, routeId])
-  @@index([vehicleId])
-  @@index([routeId])
-  @@map("vehicle_routes")
-}
-
-model Route {
-  id   String @id @default(uuid()) @db.Char(36)
-  name String @map("name") @db.VarChar(50)
-
-  description       String?            @map("description") @db.Text
-  homeToSchoolCost  Decimal?           @default(0) @map("home_to_school_cost") @db.Decimal(12, 2)
-  schoolToHomeCost  Decimal?           @default(0) @map("school_to_home_cost") @db.Decimal(12, 2)
-  roundTripCost     Decimal?           @default(0) @map("round_trip_cost") @db.Decimal(12, 2)
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  vehicleRoutes     VehicleRoute[]
-  routeBustops      RouteBustop[]
-  vehicleTripRoutes VehicleTripRoute[]
-  studentTransports StudentTransport[]
-  status            Status             @default(Active) @map("status")
-
-  @@unique([name])
-  @@index([name])
-  @@map("routes")
-}
-
-model Bustop {
-  id                             String                          @id @default(uuid()) @db.Char(36)
-  name                           String                          @map("name") @db.VarChar(100)
-  description                    String?                         @map("description") @db.Text
-  latitude                       Decimal?                        @db.Decimal(10, 8)
-  longitude                      Decimal?                        @db.Decimal(11, 8)
-  status                         Status                          @default(Active)
-  createdAt                      DateTime                        @default(now()) @map("created_at")
-  updatedAt                      DateTime                        @updatedAt @map("updated_at")
-  routeBustops                   RouteBustop[]
-  studentTransports              StudentTransport[]
-  studentTransportationRegisters StudentTransportationRegister[]
-
-  @@unique([name])
-  @@index([name])
-  @@index([status])
-  @@map("bustops")
-}
-
-model RouteBustop {
-  id        String   @id @default(uuid()) @db.Char(36)
-  routeId   String   @map("route_id") @db.Char(36)
-  route     Route    @relation(fields: [routeId], references: [id], onDelete: Restrict)
-  bustopId  String   @map("bustop_id") @db.Char(36)
-  bustop    Bustop   @relation(fields: [bustopId], references: [id], onDelete: Restrict)
-  stopOrder Int      @default(0) @map("stop_order")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([routeId, bustopId])
-  @@index([routeId])
-  @@index([bustopId])
-  @@map("route_bustops")
-}
-
-model VehicleTrip {
-  id                             String                          @id @default(uuid()) @db.Char(36)
-  label                          String?                         @map("label") @db.VarChar(100)
-  vehicleId                      String                          @map("vehicle_id") @db.Char(36)
-  vehicle                        Vehicle                         @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
-  driverId                       String                          @map("driver_id") @db.Char(36)
-  driver                         Staff                           @relation(fields: [driverId], references: [id], onDelete: Restrict)
-  startTime                      DateTime?                       @map("start_time")
-  endTime                        DateTime?                       @map("end_time")
-  latitude                       Decimal?                        @db.Decimal(10, 8)
-  longitude                      Decimal?                        @db.Decimal(11, 8)
-  tripDirection                  Direction                       @default(HomeToSchool) @map("trip_direction")
-  createdAt                      DateTime                        @default(now()) @map("created_at")
-  updatedAt                      DateTime                        @updatedAt @map("updated_at")
-  vehicleTripRoutes              VehicleTripRoute[]
-  studentTransportationRegisters StudentTransportationRegister[]
-  status                         VehicleTripStatus               @default(Pending) @map("status")
-  tripSupportStaffs              TripSupportStaff[]
-
-  @@index([vehicleId])
-  @@index([driverId])
-  @@index([startTime])
-  @@index([status])
-  @@map("vehicle_trips")
-}
-
-model VehicleTripRoute {
-  id            String      @id @default(uuid()) @db.Char(36)
-  vehicleTripId String      @map("vehicle_trip_id") @db.Char(36)
-  vehicleTrip   VehicleTrip @relation(fields: [vehicleTripId], references: [id], onDelete: Cascade)
-  routeId       String      @map("route_id") @db.Char(36)
-  route         Route       @relation(fields: [routeId], references: [id], onDelete: Restrict)
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-
-  @@unique([vehicleTripId, routeId])
-  @@index([vehicleTripId])
-  @@index([routeId])
-  @@map("vehicle_trip_routes")
-}
-
-enum VehicleTripStatus {
-  Pending
-  InProgress
-  Completed
-  Cancelled
-}
-
-enum TransportSubscriptionType {
-  RoundTrip
-  OneWaySchool
-  OneWayHome
-}
-
-model StudentTransport {
-  id               String                    @id @default(uuid()) @db.Char(36)
-  studentId        String                    @map("student_id") @db.Char(36)
-  student          Student                   @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  routeId          String                    @map("route_id") @db.Char(36)
-  route            Route                     @relation(fields: [routeId], references: [id], onDelete: Restrict)
-  bustopId         String                    @map("bustop_id") @db.Char(36)
-  bustop           Bustop                    @relation(fields: [bustopId], references: [id], onDelete: Restrict)
-  status           Status                    @default(Active)
-  subscriptionType TransportSubscriptionType @default(RoundTrip) @map("subscription_type")
-  sessionId        String                    @map("session_id") @db.Char(36)
-  session          Session                   @relation(fields: [sessionId], references: [id], onDelete: Restrict)
-  termId           String                    @map("term_id") @db.Char(36)
-  term             Term                      @relation(fields: [termId], references: [id], onDelete: Restrict)
-  classId          String                    @map("class_id") @db.Char(36)
-  class            SchoolClass               @relation(fields: [classId], references: [id], onDelete: Restrict)
-  createdAt        DateTime                  @default(now()) @map("created_at")
-  updatedAt        DateTime                  @updatedAt @map("updated_at")
-
-  @@unique([studentId, sessionId, termId])
-  @@index([routeId])
-  @@index([bustopId])
-  @@index([status])
-  @@map("student_transports")
-}
-
-enum Direction {
-  HomeToSchool
-  SchoolToHome
-}
-
-enum StudentTransportationRegisterStatus {
-  Boarding
-  OnTransit
-  DroppedOff
-}
-
-model StudentTransportationRegister {
-  id              String                              @id @default(uuid()) @db.Char(36)
-  studentId       String                              @map("student_id") @db.Char(36)
-  student         Student                             @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  nearestBustopId String                              @map("nearest_bustop_id") @db.Char(36)
-  bustop          Bustop                              @relation(fields: [nearestBustopId], references: [id], onDelete: Restrict)
-  vehicleTripId   String                              @map("vehicle_trip_id") @db.Char(36)
-  vehicleTrip     VehicleTrip                         @relation(fields: [vehicleTripId], references: [id], onDelete: Restrict)
-  startTime       DateTime?                           @map("start_time")
-  endTime         DateTime?                           @map("end_time")
-  direction       Direction                           @default(HomeToSchool) @map("direction")
-  status          StudentTransportationRegisterStatus @default(Boarding) @map("status")
-  createdAt       DateTime                            @default(now()) @map("created_at")
-  updatedAt       DateTime                            @updatedAt @map("updated_at")
-
-  pickUpLatitude   Decimal? @map("pick_up_latitude") @db.Decimal(10, 8)
-  pickUpLongitude  Decimal? @map("pick_up_longitude") @db.Decimal(11, 8)
-  dropOffLatitude  Decimal? @map("drop_off_latitude") @db.Decimal(10, 8)
-  dropOffLongitude Decimal? @map("drop_off_longitude") @db.Decimal(11, 8)
-
-  @@unique([studentId, vehicleTripId])
-  @@index([studentId])
-  @@index([nearestBustopId])
-  @@index([vehicleTripId])
-  @@index([startTime])
-  @@map("student_transportation_registers")
-}
-
-model TripSupportStaff {
-  id            String      @id @default(uuid()) @db.Char(36)
-  staffId       String      @map("staff_id") @db.Char(36)
-  staff         Staff       @relation(fields: [staffId], references: [id], onDelete: Restrict)
-  vehicleTripId String      @map("vehicle_trip_id") @db.Char(36)
-  vehicleTrip   VehicleTrip @relation(fields: [vehicleTripId], references: [id], onDelete: Restrict)
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-
-  @@unique([staffId, vehicleTripId])
-  @@index([vehicleTripId])
-  @@map("trip_support_staffs")
 }
