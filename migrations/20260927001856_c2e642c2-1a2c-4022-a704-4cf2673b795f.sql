@@ -1,0 +1,2 @@
+CREATE POLICY orgs_read_suppliers_for_shops ON public.organizations FOR SELECT TO authenticated
+USING (org_type = 'supplier' AND active AND suspended_at IS NULL AND private.has_role(auth.uid(), 'shop'));

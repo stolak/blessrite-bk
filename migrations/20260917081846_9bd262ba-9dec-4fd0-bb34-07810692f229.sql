@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_slot_booked_count() FROM anon, authenticated, PUBLIC;

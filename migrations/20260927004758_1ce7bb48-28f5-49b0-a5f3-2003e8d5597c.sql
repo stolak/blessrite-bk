@@ -1,0 +1,1 @@
+ALTER POLICY cfg_read ON public.config_settings USING (category <> 'fees' OR private.is_staff(auth.uid()));
