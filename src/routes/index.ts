@@ -13,22 +13,18 @@ import accountTransactionRouter from "./accountTransaction";
 import tempJournalTransferRouter from "./tempJournalTransfer";
 
 import uploadRouter from "./upload";
-import categoryRouter from "./category";
-import subCategoryRouter from "./subCategory";
 
 import menuRouter from "./menu";
 import appRoleRouter from "./appRole";
 import privilegeRouter from "./privilege";
-import uomRouter from "./uom";
-import inventoryItemRouter from "./inventoryItem";
 
-import salesRouter from "./sales";
-
+import brandRouter from "./brand";
+import supplierRouter from "./supplier";
 import activePeriodRouter from "./activePeriod";
-
-import storeRouter from "./store";
-import userStoreRouter from "./userStore";
-import storeTransferRouter from "./storeTransfer";
+import staffRouter from "./staff";
+import departmentRouter from "./department";
+import gradeLevelRouter from "./gradeLevel";
+import vehicleRouter from "./vehicle";
 
 import cashierRouter from "./cashier";
 import userRouter from "./user";
@@ -41,6 +37,8 @@ import payrollRouter from "./payroll";
 import activePayrollPeriodRouter from "./activePayrollPeriod";
 import administrativeExpenseComponentRouter from "./administrativeExpenseComponent";
 import administrativeExpenseRouter from "./administrativeExpense";
+import defaulSubheadSettingsRouter from "./defaulSubheadSettings";
+import defaultAccountSettingsRouter from "./defaultAccountSettings";
 
 import { authenticateJWT } from "../middlewares/auth";
 import { requirePrivilege } from "../middlewares/requirePrivilege";
@@ -58,24 +56,22 @@ router.use("/account-heads", accountHeadRouter);
 router.use("/account-subheads", accountSubheadRouter);
 router.use("/account-charts", accountChartRouter);
 router.use("/account-transactions", accountTransactionRouter);
+router.use("/default-subhead-settings", defaulSubheadSettingsRouter);
+router.use("/default-account-settings", defaultAccountSettingsRouter);
 
 router.use("/temp-journal-transfers", tempJournalTransferRouter);
-router.use("/categories", categoryRouter);
-router.use("/sub-categories", subCategoryRouter);
 
 router.use("/menus", menuRouter);
 router.use("/app-roles", appRoleRouter);
 router.use("/privileges", privilegeRouter);
-router.use("/uoms", uomRouter);
-router.use("/inventory-items", inventoryItemRouter);
 
-router.use("/sales", salesRouter);
-
+router.use("/brands", brandRouter);
+router.use("/suppliers", supplierRouter);
 router.use("/active-period", activePeriodRouter);
-
-router.use("/stores", storeRouter);
-router.use("/user-stores", userStoreRouter);
-router.use("/store-transfers", storeTransferRouter);
+router.use("/staff", staffRouter);
+router.use("/departments", departmentRouter);
+router.use("/grade-levels", gradeLevelRouter);
+router.use("/vehicles", vehicleRouter);
 
 router.use("/cashiers", cashierRouter);
 router.use("/users", userRouter);

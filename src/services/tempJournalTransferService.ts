@@ -5,7 +5,6 @@ import { accountTransactionService } from "./accountTransactionService";
 
 const tempJournalTransferInclude = {
   account: { select: { id: true, accountDescription: true, accountNo: true } },
-  project: { select: { id: true, name: true } },
 } satisfies Prisma.TempJournalTransferInclude;
 
 export type TempJournalTransferRow = Prisma.TempJournalTransferGetPayload<Record<string, never>>;
@@ -118,19 +117,6 @@ export class TempJournalTransferService {
     }
   }
 
-  private async validateProjectExists(projectId?: string | null): Promise<void> {
-    if (projectId === undefined || projectId === null) {
-      return;
-    }
-    const row = await this.prisma.project.findUnique({
-      where: { id: projectId },
-      select: { id: true },
-    });
-    if (!row) {
-      throw new Error("Invalid projectId: project not found");
-    }
-  }
-
   private resolveReferenceNo(referenceNo?: string | null): string {
     const normalizedReferenceNo = this.normalizeOptionalString(referenceNo);
     return normalizedReferenceNo && normalizedReferenceNo.length > 0
@@ -182,7 +168,6 @@ export class TempJournalTransferService {
 
     const projectId = this.normalizeOptionalProjectId(input.projectId);
     const finalReferenceNo = this.resolveReferenceNo(input.referenceNo);
-    await this.validateProjectExists(projectId);
 
     return this.prisma.tempJournalTransfer.create({
       data: {
@@ -309,22 +294,6 @@ export class TempJournalTransferService {
     });
     if (accountCount !== accountIds.length) {
       throw new Error("One or more accountId values are invalid");
-    }
-
-    const projectIds = [
-      ...new Set(
-        normalizedEntries
-          .map((entry) => entry.projectId)
-          .filter((projectId): projectId is string => projectId !== null && projectId !== undefined)
-      ),
-    ];
-    if (projectIds.length > 0) {
-      const projectCount = await this.prisma.project.count({
-        where: { id: { in: projectIds } },
-      });
-      if (projectCount !== projectIds.length) {
-        throw new Error("One or more projectId values are invalid");
-      }
     }
 
     const rows = await this.prisma.$transaction(
@@ -623,7 +592,6 @@ export class TempJournalTransferService {
     let projectId: string | null | undefined = undefined;
     if (input.projectId !== undefined) {
       projectId = this.normalizeOptionalProjectId(input.projectId);
-      await this.validateProjectExists(projectId);
     }
 
     return this.prisma.tempJournalTransfer.update({

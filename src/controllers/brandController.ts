@@ -1,59 +1,47 @@
 import { Request, Response } from "express";
-import { subCategoryService } from "../services/subCategoryService";
+import { brandService } from "../services/brandService";
 import { Status } from "@prisma/client";
 import { parseIntOrUndefined, routeParam } from "../utils/request";
 
 /**
  * @openapi
- * /api/v1/sub-categories:
+ * /api/v1/brands:
  *   post:
- *     summary: Create a sub-category
- *     tags: [SubCategories]
+ *     summary: Create a brand
+ *     tags: [Brands]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, categoryId]
+ *             required: [name]
  *             properties:
  *               name:
  *                 type: string
- *                 example: "Notebooks"
- *               description:
- *                 type: string
- *                 nullable: true
- *                 example: "Exercise books and notebooks"
- *               categoryId:
- *                 type: string
- *                 description: Parent category ID
+ *                 example: "HP"
  *               status:
  *                 type: string
  *                 enum: [Active, Inactive]
  *                 description: Optional status (defaults to Active)
  *     responses:
  *       201:
- *         description: Sub-category created
+ *         description: Brand created
  *       400:
  *         description: Validation error
  *       409:
- *         description: Duplicate sub-category name for the same category
+ *         description: Duplicate brand name
  *       500:
  *         description: Server error
  *   get:
- *     summary: List sub-categories
- *     tags: [SubCategories]
+ *     summary: List brands
+ *     tags: [Brands]
  *     parameters:
  *       - in: query
  *         name: q
  *         schema:
  *           type: string
- *         description: Optional search query (matches sub-category name)
- *       - in: query
- *         name: categoryId
- *         schema:
- *           type: string
- *         description: Optional filter by category ID
+ *         description: Optional search query (matches brand name)
  *       - in: query
  *         name: status
  *         schema:
@@ -77,33 +65,19 @@ import { parseIntOrUndefined, routeParam } from "../utils/request";
  *         description: Items per page
  *     responses:
  *       200:
- *         description: Sub-categories list
+ *         description: Brands list
  *       500:
  *         description: Server error
  */
-export const subCategoryController = {
-  createSubCategory: async (req: Request, res: Response) => {
+export const brandController = {
+  createBrand: async (req: Request, res: Response) => {
     try {
-      const { name, description, categoryId, status } = req.body ?? {};
+      const { name, status } = req.body ?? {};
 
       if (!name || typeof name !== "string" || !name.trim()) {
         return res.status(400).json({
           success: false,
-          message: "SubCategory name is required",
-        });
-      }
-
-      if (description !== undefined && description !== null && typeof description !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "description must be a string or null",
-        });
-      }
-
-      if (!categoryId || typeof categoryId !== "string" || !categoryId.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "categoryId is required",
+          message: "Brand name is required",
         });
       }
 
@@ -114,29 +88,26 @@ export const subCategoryController = {
         });
       }
 
-      const subCategory = await subCategoryService.createSubCategory({
+      const brand = await brandService.createBrand({
         name: name.trim(),
-        description: description === undefined ? null : description,
-        categoryId: categoryId.trim(),
         ...(status !== undefined ? { status } : {}),
       });
 
       return res.status(201).json({
         success: true,
-        message: "SubCategory created successfully",
-        data: subCategory,
+        message: "Brand created successfully",
+        data: brand,
       });
     } catch (error: any) {
-      const message = error?.message ?? "Failed to create sub-category";
+      const message = error?.message ?? "Failed to create brand";
       const status = message.includes("already exists") ? 409 : 500;
       return res.status(status).json({ success: false, message });
     }
   },
 
-  listSubCategories: async (req: Request, res: Response) => {
+  listBrands: async (req: Request, res: Response) => {
     try {
       const q = typeof req.query.q === "string" ? req.query.q : undefined;
-      const categoryId = typeof req.query.categoryId === "string" ? req.query.categoryId : undefined;
       const statusRaw = typeof req.query.status === "string" ? req.query.status : undefined;
       const status =
         statusRaw === undefined
@@ -158,17 +129,17 @@ export const subCategoryController = {
       const page = parseIntOrUndefined(req.query.page);
       const limit = parseIntOrUndefined(req.query.limit);
 
-      const result = await subCategoryService.listSubCategories({ q, categoryId, status, page, limit });
+      const result = await brandService.listBrands({ q, status, page, limit });
 
       return res.json({
         success: true,
-        message: "SubCategories retrieved successfully",
+        message: "Brands retrieved successfully",
         data: result,
       });
     } catch (error: any) {
       return res.status(500).json({
         success: false,
-        message: "Failed to retrieve sub-categories",
+        message: "Failed to retrieve brands",
         error: error?.message,
       });
     }
@@ -176,34 +147,34 @@ export const subCategoryController = {
 
   /**
    * @openapi
-   * /api/v1/sub-categories/{id}:
+   * /api/v1/brands/{id}:
    *   get:
-   *     summary: Get a sub-category by ID
-   *     tags: [SubCategories]
+   *     summary: Get a brand by ID
+   *     tags: [Brands]
    *     parameters:
    *       - in: path
    *         name: id
    *         required: true
    *         schema:
    *           type: string
-   *         description: Sub-category ID
+   *         description: Brand ID
    *     responses:
    *       200:
-   *         description: Sub-category details
+   *         description: Brand details
    *       404:
-   *         description: Sub-category not found
+   *         description: Brand not found
    *       500:
    *         description: Server error
    *   put:
-   *     summary: Update a sub-category
-   *     tags: [SubCategories]
+   *     summary: Update a brand
+   *     tags: [Brands]
    *     parameters:
    *       - in: path
    *         name: id
    *         required: true
    *         schema:
    *           type: string
-   *         description: Sub-category ID
+   *         description: Brand ID
    *     requestBody:
    *       required: true
    *       content:
@@ -213,84 +184,78 @@ export const subCategoryController = {
    *             properties:
    *               name:
    *                 type: string
-   *               description:
-   *                 type: string
-   *                 nullable: true
-   *               categoryId:
-   *                 type: string
-   *                 nullable: true
    *     responses:
    *       200:
-   *         description: Sub-category updated
+   *         description: Brand updated
    *       400:
    *         description: Validation error
    *       404:
-   *         description: Sub-category not found
+   *         description: Brand not found
    *       409:
-   *         description: Duplicate sub-category name for the same category
+   *         description: Duplicate brand name
    *       500:
    *         description: Server error
    *   delete:
-   *     summary: Delete a sub-category
-   *     tags: [SubCategories]
+   *     summary: Delete a brand
+   *     tags: [Brands]
    *     parameters:
    *       - in: path
    *         name: id
    *         required: true
    *         schema:
    *           type: string
-   *         description: Sub-category ID
+   *         description: Brand ID
    *     responses:
    *       200:
-   *         description: Sub-category deleted
+   *         description: Brand deleted
    *       404:
-   *         description: Sub-category not found
+   *         description: Brand not found
    *       500:
    *         description: Server error
    */
-  getSubCategoryById: async (req: Request, res: Response) => {
+  getBrandById: async (req: Request, res: Response) => {
     try {
       const id = routeParam(req.params.id);
 
       if (!id) {
         return res.status(400).json({
           success: false,
-          message: "SubCategory id parameter is required",
+          message: "Brand id parameter is required",
         });
       }
 
-      const subCategory = await subCategoryService.getSubCategoryById(id);
+      const brand = await brandService.getBrandById(id);
 
-      if (!subCategory) {
+      if (!brand) {
         return res.status(404).json({
           success: false,
-          message: "SubCategory not found",
+          message: "Brand not found",
         });
       }
 
       return res.json({
         success: true,
-        message: "SubCategory retrieved successfully",
-        data: subCategory,
+        message: "Brand retrieved successfully",
+        data: brand,
       });
     } catch (error: any) {
       return res.status(500).json({
         success: false,
-        message: "Failed to retrieve sub-category",
+        message: "Failed to retrieve brand",
         error: error?.message,
       });
     }
   },
 
-  updateSubCategory: async (req: Request, res: Response) => {
+  updateBrand: async (req: Request, res: Response) => {
     try {
       const id = routeParam(req.params.id);
-      const { name, description, categoryId, status } = req.body ?? {};
+      const { name, status } = req.body ?? {};
 
       if (!id) {
         return res.status(400).json({
           success: false,
-          message: "SubCategory id parameter is required",
+          message: "Brand id parameter is required",
         });
       }
 
@@ -301,26 +266,6 @@ export const subCategoryController = {
         });
       }
 
-      if (description !== undefined && description !== null && typeof description !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "description must be a string or null",
-        });
-      }
-
-      if (categoryId !== undefined && categoryId !== null && typeof categoryId !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "categoryId must be a string or null",
-        });
-      }
-      if (categoryId === null) {
-        return res.status(400).json({
-          success: false,
-          message: "categoryId cannot be null",
-        });
-      }
-
       if (status !== undefined && status !== Status.Active && status !== Status.Inactive) {
         return res.status(400).json({
           success: false,
@@ -328,66 +273,62 @@ export const subCategoryController = {
         });
       }
 
-      const existing = await subCategoryService.getSubCategoryById(id);
+      const existing = await brandService.getBrandById(id);
       if (!existing) {
         return res.status(404).json({
           success: false,
-          message: "SubCategory not found",
+          message: "Brand not found",
         });
       }
 
-      const updated = await subCategoryService.updateSubCategory(id, {
+      const updated = await brandService.updateBrand(id, {
         ...(name !== undefined ? { name: name.trim() } : {}),
-        ...(description !== undefined ? { description } : {}),
-        ...(categoryId !== undefined ? { categoryId: categoryId.trim() } : {}),
         ...(status !== undefined ? { status } : {}),
       });
 
       return res.json({
         success: true,
-        message: "SubCategory updated successfully",
+        message: "Brand updated successfully",
         data: updated,
       });
     } catch (error: any) {
-      const message = error?.message ?? "Failed to update sub-category";
+      const message = error?.message ?? "Failed to update brand";
       const status = message.includes("already exists") ? 409 : 500;
       return res.status(status).json({ success: false, message });
     }
   },
 
-  deleteSubCategory: async (req: Request, res: Response) => {
+  deleteBrand: async (req: Request, res: Response) => {
     try {
       const id = routeParam(req.params.id);
 
       if (!id) {
         return res.status(400).json({
           success: false,
-          message: "SubCategory id parameter is required",
+          message: "Brand id parameter is required",
         });
       }
 
-      const existing = await subCategoryService.getSubCategoryById(id);
+      const existing = await brandService.getBrandById(id);
       if (!existing) {
         return res.status(404).json({
           success: false,
-          message: "SubCategory not found",
+          message: "Brand not found",
         });
       }
 
-      const deleted = await subCategoryService.deleteSubCategory(id);
+      const deleted = await brandService.deleteBrand(id);
 
       return res.json({
         success: true,
-        message: "SubCategory deleted successfully",
+        message: "Brand deleted successfully",
         data: deleted,
       });
     } catch (error: any) {
-      const message = error?.message ?? "Failed to delete sub-category";
-      const status = message.includes("Cannot delete") ? 409 : 500;
-      return res.status(status).json({
+      return res.status(500).json({
         success: false,
-        message,
-        error: message,
+        message: "Failed to delete brand",
+        error: error?.message,
       });
     }
   },

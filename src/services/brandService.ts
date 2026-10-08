@@ -1,16 +1,15 @@
 import prisma from "../utils/prisma";
 import { Status } from "@prisma/client";
 
-export interface UomData {
+export interface BrandData {
   id: string;
   name: string;
-  symbol: string;
   status: Status;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface ListUomsParams {
+export interface ListBrandsParams {
   q?: string;
   status?: Status | "All";
   page?: number;
@@ -25,28 +24,27 @@ function isPrismaKnownErrorWithCode(e: unknown): e is { code: string } {
   return typeof e === "object" && e !== null && "code" in e && typeof (e as any).code === "string";
 }
 
-export class UomService {
+export class BrandService {
   private prisma = prisma;
 
-  async createUom(input: { name: string; symbol: string; status?: Status }): Promise<UomData> {
+  async createBrand(input: { name: string; status?: Status }): Promise<BrandData> {
     try {
-      return await this.prisma.uom.create({
+      return await this.prisma.brand.create({
         data: {
           name: input.name,
-          symbol: input.symbol,
           ...(input.status !== undefined ? { status: input.status } : {}),
         },
       });
     } catch (e) {
       if (isPrismaKnownErrorWithCode(e) && e.code === "P2002") {
-        throw new Error("Uom name or symbol already exists");
+        throw new Error("Brand name already exists");
       }
       throw e;
     }
   }
 
-  async listUoms(params: ListUomsParams = {}): Promise<{
-    uoms: UomData[];
+  async listBrands(params: ListBrandsParams = {}): Promise<{
+    brands: BrandData[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {
     const page = clampInt(params.page ?? 1, 1, 1_000_000);
@@ -63,14 +61,14 @@ export class UomService {
     }
 
     if (params.q) {
-      where.OR = [{ name: { contains: params.q } }, { symbol: { contains: params.q } }];
+      where.name = { contains: params.q };
     }
 
     const finalWhere = Object.keys(where).length ? where : undefined;
 
     const [total, rows] = await Promise.all([
-      this.prisma.uom.count({ where: finalWhere }),
-      this.prisma.uom.findMany({
+      this.prisma.brand.count({ where: finalWhere }),
+      this.prisma.brand.findMany({
         where: finalWhere,
         orderBy: { name: "asc" },
         skip,
@@ -81,46 +79,40 @@ export class UomService {
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
     // Keep behavior predictable if MySQL collation differs.
-    const q = params.q?.toLowerCase();
-    const uoms = q
-      ? rows.filter((u) => u.name.toLowerCase().includes(q) || u.symbol.toLowerCase().includes(q))
-      : rows;
+    const brands = params.q ? rows.filter((b) => b.name.toLowerCase().includes(params.q!.toLowerCase())) : rows;
 
     return {
-      uoms,
+      brands,
       pagination: { page, limit, total, totalPages },
     };
   }
 
-  async getUomById(id: string): Promise<UomData | null> {
-    return await this.prisma.uom.findUnique({ where: { id } });
+  async getBrandById(id: string): Promise<BrandData | null> {
+    return await this.prisma.brand.findUnique({ where: { id } });
   }
 
-  async updateUom(
-    id: string,
-    input: { name?: string; symbol?: string; status?: Status }
-  ): Promise<UomData> {
+  async updateBrand(id: string, input: { name?: string; status?: Status }): Promise<BrandData> {
     try {
-      return await this.prisma.uom.update({
+      return await this.prisma.brand.update({
         where: { id },
         data: {
           ...(input.name !== undefined ? { name: input.name } : {}),
-          ...(input.symbol !== undefined ? { symbol: input.symbol } : {}),
           ...(input.status !== undefined ? { status: input.status } : {}),
           updatedAt: new Date(),
         },
       });
     } catch (e) {
       if (isPrismaKnownErrorWithCode(e) && e.code === "P2002") {
-        throw new Error("Uom name or symbol already exists");
+        throw new Error("Brand name already exists");
       }
       throw e;
     }
   }
 
-  async deleteUom(id: string): Promise<UomData> {
-    return await this.prisma.uom.delete({ where: { id } });
+  async deleteBrand(id: string): Promise<BrandData> {
+    return await this.prisma.brand.delete({ where: { id } });
   }
 }
 
-export const uomService = new UomService();
+export const brandService = new BrandService();
+

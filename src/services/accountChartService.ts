@@ -267,10 +267,10 @@ export class AccountChartService {
     if (transactions.length > 0) {
       throw new Error("Account chart cannot be deleted while transactions reference it");
     }
-    const journalLines = await this.prisma.studentJournalTransfer.findMany({
+    const tempJournalLines = await this.prisma.tempJournalTransfer.findMany({
       where: { accountId: id },
     });
-    if (journalLines.length > 0) {
+    if (tempJournalLines.length > 0) {
       throw new Error("Account chart cannot be deleted while journal lines reference it");
     }
 

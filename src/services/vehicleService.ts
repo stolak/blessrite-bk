@@ -1,22 +1,16 @@
 import prisma from "../utils/prisma";
-import { isPrismaKnownErrorWithCode } from "../utils/assessmentHttp";
 import { Prisma, Status, VehicleMake, VehicleType } from "@prisma/client";
 import { resolveStaffId } from "../utils/staffContext";
+
+function isPrismaKnownErrorWithCode(e: unknown): e is { code: string } {
+  return typeof e === "object" && e !== null && "code" in e && typeof (e as any).code === "string";
+}
 
 const include = {
   driver: {
     select: { id: true, StaffNumber: true, name: true, email: true, status: true },
   },
   user: { select: { id: true, email: true, firstName: true, lastName: true } },
-  vehicleRoutes: {
-    select: {
-      id: true,
-      routeId: true,
-      route: { select: { id: true, name: true, description: true, homeToSchoolCost: true, schoolToHomeCost: true, roundTripCost: true, status: true } },
-      createdAt: true,
-    },
-  },
-  _count: { select: { vehicleRoutes: true, vehicleTrips: true } },
 } satisfies Prisma.VehicleInclude;
 
 type Row = Prisma.VehicleGetPayload<{ include: typeof include }>;
@@ -36,8 +30,6 @@ export interface VehicleData {
   user: Row["user"];
   createdAt: Date;
   updatedAt: Date;
-  vehicleRoutes: Row["vehicleRoutes"];
-  _count: Row["_count"];
 }
 
 function mapRow(row: Row): VehicleData {
@@ -56,8 +48,6 @@ function mapRow(row: Row): VehicleData {
     user: row.user,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    vehicleRoutes: row.vehicleRoutes,
-    _count: row._count,
   };
 }
 
@@ -300,16 +290,6 @@ export class VehicleService {
   async delete(id: string): Promise<VehicleData> {
     const existing = await this.getById(id);
     if (!existing) throw new Error("Vehicle not found");
-
-    const [assignmentCount, tripCount] = await Promise.all([
-      this.prisma.vehicleRoute.count({ where: { vehicleId: id } }),
-      this.prisma.vehicleTrip.count({ where: { vehicleId: id } }),
-    ]);
-    if (assignmentCount > 0 || tripCount > 0) {
-      throw new Error(
-        `Cannot delete vehicle because it is assigned to routes (${assignmentCount}) or has trips (${tripCount})`
-      );
-    }
 
     try {
       const row = await this.prisma.vehicle.delete({ where: { id }, include });

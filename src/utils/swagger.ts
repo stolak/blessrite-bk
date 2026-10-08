@@ -14,28 +14,15 @@ const options: swaggerJSDoc.Options = {
     },
     tags: [
       { name: "Auth", description: "Authentication endpoints" },
-      // { name: "Banks", description: "Bank management" },
-      // { name: "Brands", description: "Brand management" },
+      { name: "Banks", description: "Bank management" },
+      { name: "Brands", description: "Brand management" },
       { name: "Menus", description: "Application menu management (route and caption)" },
       { name: "AppRoles", description: "Application roles (name and status)" },
       { name: "Privileges", description: "Permission definitions (read-only listing)" },
-      // { name: "Categories", description: "Category management" },
-      // { name: "InventoryItems", description: "Inventory item management" },
-      // { name: "SubCategories", description: "Sub-category management" },
-      // { name: "Suppliers", description: "Supplier management" },
-      // { name: "Projects", description: "Project management" },
-      // { name: "ProjectCollections", description: "Inventory project_collection transactions" },
-      // { name: "Purchases", description: "Purchase transactions" },
-      // { name: "SchoolClasses", description: "School class management" },
-      // { name: "Students", description: "Student management" },
-      // { name: "SubClasses", description: "Sub class management" },
-      // { name: "Terms", description: "Term management" },
-      // { name: "Sessions", description: "Session management" },
-      // { name: "Stores", description: "Store management" },
-      // { name: "StoreTransfers", description: "Inter-store inventory transfers" },
+      { name: "Suppliers", description: "Supplier management" },
       {
         name: "ActivePeriod",
-        description: "Active period singleton (session + term + date range)",
+        description: "Active period singleton (start and end date range)",
       },
       {
         name: "AccountGroups",
@@ -67,23 +54,6 @@ const options: swaggerJSDoc.Options = {
         name: "DefaultAccountSettings",
         description: "Default account settings row — PATCH update only (by settingsId)",
       },
-      { name: "BillingItems", description: "Billing item master data (CRUD)" },
-      {
-        name: "ClassDefaultBillings",
-        description: "Default class billing rows (CRUD + bulk create by billingId/amount pairs)",
-      },
-      {
-        name: "StudentBillings",
-        description: "Student billing rows (CRUD + bulk create with shared referentId)",
-      },
-      {
-        name: "StudentConcessionDiscounts",
-        description: "Student concession discount rows (CRUD + bulk create with shared referentId)",
-      },
-      {
-        name: "ConcessionDiscounts",
-        description: "Concessions/discounts with appliesTo billing items (CRUD)",
-      },
       {
         name: "TempJournalTransfers",
         description: "Temporary journal transfer entries (CRUD)",
@@ -96,10 +66,6 @@ const options: swaggerJSDoc.Options = {
       { name: "Departments", description: "Department master data (CRUD)" },
       { name: "GradeLevels", description: "Grade level master data (CRUD)" },
       { name: "Staff", description: "Staff registration and profile management" },
-      {
-        name: "StaffBankDetails",
-        description: "Staff bank account details (CRUD and bulk create)",
-      },
       {
         name: "SalaryComponents",
         description: "Payroll salary components (earnings, deductions, function-type formulas)",
@@ -130,108 +96,14 @@ const options: swaggerJSDoc.Options = {
         description: "Administrative expense transactions linked to a component (CRUD)",
       },
       {
-        name: "AssessmentTemplates",
-        description: "Assessment template definitions with versioning (CRUD)",
-      },
-      {
-        name: "AssessmentComponents",
-        description: "Scoring components within an assessment template (CRUD)",
-      },
-      {
-        name: "ClassAssessmentTemplates",
-        description:
-          "Assessment, grading, and behavioural template assignments per class, session, and term (CRUD)",
-      },
-      { name: "Subjects", description: "Academic subjects master data (CRUD)" },
-      {
-        name: "ClassSubjects",
-        description: "Subjects offered per class and session (CRUD)",
-      },
-      {
-        name: "StudentSubjectRegistrations",
-        description: "Student subject enrolment per session and term (CRUD)",
-      },
-      {
-        name: "StudentAssessmentScores",
-        description: "Student scores per assessment component (CRUD)",
-      },
-      {
-        name: "GradingTemplates",
-        description: "Grading scale templates with versioning (CRUD)",
-      },
-      {
-        name: "GradingTemplateItems",
-        description: "Grade bands within a grading template (CRUD)",
-      },
-      {
-        name: "BehaviouralAssessmentTemplates",
-        description: "Behavioural assessment template definitions with versioning (CRUD)",
-      },
-      {
-        name: "BehaviouralAssessmentComponents",
-        description: "Scoring components within a behavioural assessment template (CRUD)",
-      },
-      {
-        name: "BehaviouralGradingTemplates",
-        description: "Behavioural grading scale templates with versioning (CRUD)",
-      },
-      {
-        name: "BehaviouralGradingItems",
-        description: "Grade bands within a behavioural grading template (CRUD)",
-      },
-      {
-        name: "StudentBehaviouralAssessmentScores",
-        description:
-          "Student behavioural scores per component, class, session, and term (CRUD and bulk upsert)",
-      },
-      {
-        name: "AssessmentRemarks",
-        description: "Per-student assessment remarks by class, session, and term (CRUD)",
-      },
-      {
-        name: "DefaultClassRemarkSetups",
-        description:
-          "Default remark templates per class by overall average score range (CRUD; non-overlapping boundaries)",
-      },
-      {
-        name: "Assignments",
-        description:
-          "Teacher assignments per class, subject, session, and term with attachments (CRUD)",
-      },
-      {
-        name: "StudentAssignments",
-        description:
-          "Student assignment submissions with attachments, scoring, and grading (CRUD and upsert)",
-      },
-      {
-        name: "TeacherSubjects",
-        description:
-          "Teacher subject assignments per staff, class, subclass, session, and term (CRUD)",
-      },
-      { name: "Uoms", description: "Unit of measurement (UoM) management" },
-      { name: "Donations", description: "Inventory donation transactions" },
-      {
-        name: "Sales",
-        description: "Inventory sales transactions (bulk create, list, grouped by reference)",
-      },
-      {
         name: "Cashiers",
         description: "Cashier records linked to staff and ledger accounts (CRUD)",
       },
-      { name: "Dashboard", description: "Dashboard endpoints" },
+      {
+        name: "Vehicles",
+        description: "Vehicle fleet management (CRUD)",
+      },
       { name: "Email", description: "Email management" },
-      {
-        name: "OpenBankingScores",
-        description: "Open banking risk score calculation from cashflow and banking indicators",
-      },
-      {
-        name: "CreditBureauScores",
-        description: "Credit bureau risk score calculation from credit report indicators",
-      },
-      {
-        name: "MerchantRiskScores",
-        description: "Merchant risk score calculation from category risk and purchase utilization",
-      },
       { name: "Helper", description: "Helper utilities" },
       { name: "Upload", description: "File upload management" },
     ],
@@ -249,10 +121,6 @@ const options: swaggerJSDoc.Options = {
   },
   // Ensure all route and controller files are scanned
   apis: [
-    // "src/routes/**/*.ts",
-    // "src/routes/**/*.js",
-    // "src/controllers/**/*.ts",
-    // "src/controllers/**/*.js",
     `${BUILD_DIR}/routes/*`,
     `${BUILD_DIR}/controllers/*`,
   ],

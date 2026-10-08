@@ -81,51 +81,28 @@ function inferRequiredPrivilege(req: Request): string | null {
     "account_transactions",
     "default_subhead_settings",
     "default_account_settings",
-
-    // Billing / school fees
-    "billing_items",
-    "concession_discounts",
-    "class_default_billings",
-    "student_billings",
-    "student_concession_discounts",
     "temp_journal_transfers",
 
-    // Inventory master data / ops
-    "categories",
-    "sub_categories",
+    // Master data
     "brands",
-    "uoms",
-    "inventory_items",
     "suppliers",
-    "purchases",
-    "sales",
-    "donations",
-    "stores",
-    "store_transfers",
-    "inventory_receive_acknowledgements",
+    "departments",
+    "grade_levels",
+    "staff",
+    "vehicles",
+    "cashiers",
+    "active_period",
     "upload",
 
-    // School domain
-    "school_classes",
-    "students",
-    "sub_classes",
-    "terms",
-    "sessions",
-    "active_period",
-    "default_billing_period",
-    "staff",
-
-    // Projects / facilities / collections
-    "projects",
-    "project_collections",
-    "facilities",
-    "facility_collections",
-    "cashiers",
-    "student_collections",
-    "staff_collections",
-
-    // Access control helper routes
-    "user_stores",
+    // Payroll / expenses
+    "salary_components",
+    "salary_charts",
+    "staff_salary_override_components",
+    "payroll",
+    "active_payroll_period",
+    "administrative_expense_components",
+    "administrative_expenses",
+    "audit_logs",
   ]);
 
   // Special-case “manage” endpoints where action is not simple CRUD.
@@ -141,10 +118,6 @@ function inferRequiredPrivilege(req: Request): string | null {
     return `app_roles.${action}`;
   }
 
-  if (resource === "stores" && path.includes("/users")) {
-    return "stores.users.manage";
-  }
-
   // Privilege definitions are read-only via API.
   if (resource === "privileges") {
     return "privileges.read";
@@ -155,10 +128,6 @@ function inferRequiredPrivilege(req: Request): string | null {
     return `${resource}.read`;
   }
 
-  // Some routers only expose write endpoints
-  if (resource === "inventory_receive_acknowledgements") {
-    return "inventory_receive_acknowledgements.write";
-  }
   if (resource === "upload") {
     return "upload.write";
   }

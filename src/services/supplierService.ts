@@ -223,21 +223,17 @@ export class SupplierService {
   }
 
   async deleteSupplier(id: string): Promise<SupplierData> {
-    // validate if the supplier has any inventory transactions
-    const inventoryTransactions = await this.prisma.inventoryTransaction.findMany({
-      where: { supplierId: id },
-    });
-    if (inventoryTransactions.length > 0) {
-      throw new Error("Supplier cannot be deleted while inventory transactions reference it");
-    }
     try {
       return await this.prisma.supplier.delete({
         where: { id },
         include: { createdBy: { select: { firstName: true, lastName: true } } },
       });
     } catch (e) {
+      if (isPrismaKnownErrorWithCode(e) && e.code === "P2025") {
+        throw new Error("Supplier not found");
+      }
       if (isPrismaKnownErrorWithCode(e) && e.code === "P2003") {
-        throw new Error("Record to delete does not exist");
+        throw new Error("Cannot delete supplier while related records reference it");
       }
       throw e;
     }

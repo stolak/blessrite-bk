@@ -1,13 +1,35 @@
 import { Request, Response } from "express";
 import { Status, VehicleMake, VehicleType } from "@prisma/client";
 import { vehicleService } from "../services/vehicleService";
-import { handleAssessmentError, requireRouteId } from "../utils/assessmentController";
 import { getAuthenticatedUserId } from "../middlewares/auth";
 import { parseIntOrUndefined } from "../utils/request";
 
 function queryString(query: Request["query"], key: string): string | undefined {
   const raw = query[key];
   return typeof raw === "string" ? raw : undefined;
+}
+
+function requireRouteId(req: Request, res: Response): string | null {
+  const id = typeof req.params.id === "string" ? req.params.id.trim() : "";
+  if (!id) {
+    res.status(400).json({ success: false, message: "id is required" });
+    return null;
+  }
+  return id;
+}
+
+function handleAssessmentError(res: Response, error: unknown, fallback: string): Response {
+  const message = error instanceof Error ? error.message : fallback;
+  const status =
+    message.includes("not found") || message.includes("Invalid")
+      ? 404
+      : message.includes("required") ||
+          message.includes("cannot") ||
+          message.includes("must be") ||
+          message.includes("already exists")
+        ? 400
+        : 500;
+  return res.status(status).json({ success: false, message });
 }
 
 function parseVehicleType(raw: unknown): VehicleType | undefined | "invalid" {

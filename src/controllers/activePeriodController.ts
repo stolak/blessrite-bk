@@ -28,7 +28,7 @@ function parseIsoDateRequired(v: unknown): Date | null {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [startDate, endDate, sessionId, termId]
+ *             required: [startDate, endDate]
  *             properties:
  *               startDate:
  *                 type: string
@@ -38,17 +38,11 @@ function parseIsoDateRequired(v: unknown): Date | null {
  *                 type: string
  *                 format: date
  *                 description: ISO date (e.g. YYYY-MM-DD)
- *               sessionId:
- *                 type: string
- *               termId:
- *                 type: string
  *     responses:
  *       200:
  *         description: Active period upserted
  *       400:
  *         description: Validation error
- *       404:
- *         description: Invalid sessionId/termId
  *       500:
  *         description: Server error
  */
@@ -72,7 +66,7 @@ export const activePeriodController = {
 
   upsertActivePeriod: async (req: Request, res: Response) => {
     try {
-      const { startDate, endDate, sessionId, termId } = req.body ?? {};
+      const { startDate, endDate } = req.body ?? {};
 
       const start = parseIsoDateRequired(startDate);
       if (!start) {
@@ -88,18 +82,9 @@ export const activePeriodController = {
           .json({ success: false, message: "endDate is required and must be a valid ISO date string" });
       }
 
-      if (!sessionId || typeof sessionId !== "string" || !sessionId.trim()) {
-        return res.status(400).json({ success: false, message: "sessionId is required" });
-      }
-      if (!termId || typeof termId !== "string" || !termId.trim()) {
-        return res.status(400).json({ success: false, message: "termId is required" });
-      }
-
       const saved = await activePeriodService.upsertActivePeriod({
         startDate: start,
         endDate: end,
-        sessionId: sessionId.trim(),
-        termId: termId.trim(),
       });
 
       return res.json({
@@ -110,13 +95,10 @@ export const activePeriodController = {
     } catch (error: any) {
       const message = error?.message ?? "Failed to save active period";
       const status =
-        message === "Invalid sessionId" || message === "Invalid termId"
-          ? 404
-          : message.includes("required") || message.includes("must be before") || message.includes("valid")
-            ? 400
-            : 500;
+        message.includes("required") || message.includes("must be before") || message.includes("valid")
+          ? 400
+          : 500;
       return res.status(status).json({ success: false, message });
     }
   },
 };
-

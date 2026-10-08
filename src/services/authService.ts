@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { getJwtSecret } from "../utils/env";
 import prisma from "../utils/prisma";
 import { emailService } from "./emailService";
-import { UserType, StaffPosition } from "@prisma/client";
+import { UserType } from "@prisma/client";
 import { auditService } from "./auditService";
 
 export interface AuthResponse {
@@ -17,60 +17,6 @@ export interface AuthResponse {
       profileImageUrl?: string;
       name: string;
       userType: UserType;
-      studentInfo?: {
-        id: string;
-        name: string;
-        email: string;
-        phoneNumber: string;
-        classid: string;
-        class: {
-          id: string;
-          name: string;
-          description: string;
-        };
-        subclass: {
-          id: string;
-          name: string;
-        };
-      };
-      parentInfo?: {
-        email: string;
-        phoneNumber: string;
-        students: {
-          id: string;
-          name: string;
-          email: string;
-          phoneNumber: string;
-          imageUrl: string | null;
-          classid: string;
-          subclassId: string;
-          class: {
-            id: string;
-            name: string;
-            description: string;
-          };
-          subclass: {
-            id: string;
-            name: string;
-          };
-        }[];
-      };
-      teacherInfo?: {
-        id: string;
-        name: string;
-        email: string;
-        phoneNumber: string;
-        classid: string;
-        class: {
-          id: string;
-          name: string;
-          description: string;
-        };
-        subclass: {
-          id: string;
-          name: string;
-        };
-      };
     };
     tokens: {
       accessToken: string;
@@ -105,157 +51,7 @@ function buildTokens(user: any) {
   return { accessToken, refreshToken, expiresIn: accessExpiresInSeconds };
 }
 
-type AuthUser = AuthResponse["data"]["user"];
-type UserProfileContext = Pick<AuthUser, "studentInfo" | "parentInfo" | "teacherInfo">;
-type ClassInfo = NonNullable<AuthUser["studentInfo"]>["class"];
-type SubclassInfo = NonNullable<AuthUser["studentInfo"]>["subclass"];
-
-/** Contact details of the currently authenticating user (used for parent/teacher info). */
-interface UserContact {
-  email: string;
-  phoneNumber?: string | null;
-}
-
-/** Staff positions that qualify a user for `teacherInfo`. */
-const TEACHING_POSITIONS: StaffPosition[] = [
-  StaffPosition.class_teacher,
-  StaffPosition.assistant_teacher,
-  StaffPosition.subject_teacher,
-  StaffPosition.teacher,
-];
-
-const classSubclassSelect = {
-  class: { select: { id: true, name: true } },
-  subClass: { select: { id: true, name: true } },
-} as const;
-
-function fullName(...parts: (string | null | undefined)[]): string {
-  return parts.filter(Boolean).join(" ");
-}
-
-// `SchoolClass` has no description column, so it is always returned as empty.
-function mapClass(cls?: { id: string; name: string } | null): ClassInfo {
-  return { id: cls?.id ?? "", name: cls?.name ?? "", description: "" };
-}
-
-function mapSubclass(sub?: { id: string; name: string } | null): SubclassInfo {
-  return { id: sub?.id ?? "", name: sub?.name ?? "" };
-}
-
-function mapStudent(student: {
-  id: string;
-  firstName: string;
-  middleName: string | null;
-  lastName: string;
-  studentEmail: string | null;
-  guardianContact: string | null;
-  classId: string | null;
-  class: { id: string; name: string } | null;
-  subClass: { id: string; name: string } | null;
-}) {
-  return {
-    id: student.id,
-    name: fullName(student.firstName, student.middleName, student.lastName),
-    email: student.studentEmail ?? "",
-    phoneNumber: student.guardianContact ?? "",
-    classid: student.classId ?? "",
-    class: mapClass(student.class),
-    subclass: mapSubclass(student.subClass),
-  };
-}
-
 export class AuthService {
-  /**
-   * Builds userType-specific context attached to the auth response:
-   * - `studentInfo` for Student users (their own linked student record)
-   * - `parentInfo` for Parent users (their linked students)
-   * - `teacherInfo` for Staff users holding a teaching position
-   */
-  private async buildUserProfileContext(
-    userId: string,
-    userType: UserType,
-    contact: UserContact
-  ): Promise<UserProfileContext> {
-    switch (userType) {
-      case UserType.Student:
-        return this.buildStudentContext(userId);
-      case UserType.Parent:
-        return this.buildParentContext(userId, contact);
-      case UserType.Staff:
-        return this.buildTeacherContext(userId, contact);
-      default:
-        return {};
-    }
-  }
-
-  private async buildStudentContext(userId: string): Promise<UserProfileContext> {
-    const student = await prisma.student.findFirst({
-      where: { userId },
-      include: classSubclassSelect,
-    });
-
-    if (!student) return {};
-
-    return { studentInfo: mapStudent(student) };
-  }
-
-  private async buildParentContext(
-    userId: string,
-    contact: UserContact
-  ): Promise<UserProfileContext> {
-    const students = await prisma.student.findMany({
-      where: { guardianEmail: contact.email },
-      include: classSubclassSelect,
-    });
-
-    return {
-      parentInfo: {
-        email: contact.email,
-        phoneNumber: contact.phoneNumber ?? "",
-        students: students.map((student) => ({
-          ...mapStudent(student),
-          imageUrl: student.imageUrl ?? null,
-          subclassId: student.subClassId ?? "",
-        })),
-      },
-    };
-  }
-
-  private async buildTeacherContext(
-    userId: string,
-    contact: UserContact
-  ): Promise<UserProfileContext> {
-    const staff = await prisma.staff.findFirst({
-      where: { userId, position: { in: TEACHING_POSITIONS } },
-      include: {
-        teacherSubjects: {
-          orderBy: { updatedAt: "desc" },
-          take: 1,
-          include: {
-            class: { select: { id: true, name: true } },
-            subclass: { select: { id: true, name: true } },
-          },
-        },
-      },
-    });
-
-    if (!staff) return {};
-
-    const assignment = staff.teacherSubjects[0];
-
-    return {
-      teacherInfo: {
-        id: staff.id,
-        name: staff.name,
-        email: staff.email,
-        phoneNumber: contact.phoneNumber ?? "",
-        classid: assignment?.classId ?? "",
-        class: mapClass(assignment?.class),
-        subclass: mapSubclass(assignment?.subclass),
-      },
-    };
-  }
-
   async create(input: UserRegistrationInput): Promise<AuthResponse> {
     const { email, password, profileImageUrl } = input;
     // Check if user already exists by email
@@ -284,10 +80,6 @@ export class AuthService {
 
     const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "";
     const tokens = buildTokens(user.id);
-    const profileContext = await this.buildUserProfileContext(user.id, user.userType, {
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-    });
 
     return {
       success: true,
@@ -299,7 +91,6 @@ export class AuthService {
           profileImageUrl: user.profileImageUrl ?? undefined,
           name,
           userType: user.userType,
-          ...profileContext,
         },
         tokens,
       },
@@ -358,10 +149,6 @@ export class AuthService {
       // requestId: request.headers["x-request-id"],
       status: "SUCCESS",
     });
-    const profileContext = await this.buildUserProfileContext(user.id, user.userType, {
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-    });
     return {
       success: true,
       message: "Login successful",
@@ -372,7 +159,6 @@ export class AuthService {
           name,
           profileImageUrl: user.profileImageUrl ?? undefined,
           userType: user.userType,
-          ...profileContext,
         },
         tokens,
       },
