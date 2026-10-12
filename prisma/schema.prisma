@@ -91,19 +91,27 @@ model User {
   approvedUsers User[] @relation("ApprovedBy")
   modifiedUsers User[] @relation("ModifiedBy")
 
-  status       String   @default("active")
-  referralCode String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status               String   @default("active")
+  referralCode         String?
+  /// Customer profile fields formerly stored in Supabase `profiles`.
+  address              String?  @db.Text
+  city                 String?
+  province             String?  @default("Manitoba")
+  preferredContact     String   @default("email") @map("preferred_contact")
+  notifyEmail          Boolean  @default(true) @map("notify_email")
+  notifySms            Boolean  @default(false) @map("notify_sms")
+  preferredContactTime String?  @map("preferred_contact_time")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Password reset tokens
   passwordResetTokens PasswordResetToken[]
 
   // Inventory/School domain relations
-  userRoles             UserRole[]
-  staffProfile          Staff?                 @relation("StaffUser")
-  createdSuppliers      Supplier[]             @relation("SupplierCreatedBy")
-  createdStaff          Staff[]                @relation("StaffCreatedBy")
+  userRoles            UserRole[]
+  staffProfile         Staff?                @relation("StaffUser")
+  createdSuppliers     Supplier[]            @relation("SupplierCreatedBy")
+  createdStaff         Staff[]               @relation("StaffCreatedBy")
   tempJournalTransfers TempJournalTransfer[]
 
   privilegeLinks PrivilegeToUser[]
@@ -119,6 +127,62 @@ model User {
   administrativeExpensesCreated AdministrativeExpense[]        @relation("AdministrativeExpenseCreatedBy")
   administrativeExpensesUpdated AdministrativeExpense[]        @relation("AdministrativeExpenseUpdatedBy")
   vehicles                      Vehicle[]
+
+  /// BlessRite service domain (user ids replace former Supabase auth.users references).
+  repairShops                 RepairShop[]
+  customerVehicles            CustomerVehicle[]
+  bookings                    Booking[]              @relation("BookingCustomer")
+  assignedBookings            Booking[]              @relation("BookingAssignedStaff")
+  bookingsCreated             Booking[]              @relation("BookingCreatedByStaff")
+  roadsideRequests            RoadsideRequest[]
+  estimates                   Estimate[]             @relation("EstimateCustomer")
+  estimatesDecided            Estimate[]             @relation("EstimateDecidedBy")
+  messagesAsCustomer          Message[]              @relation("MessageCustomer")
+  messagesSent                Message[]              @relation("MessageSender")
+  invoices                    Invoice[]
+  availabilityBlocksCreated   AvailabilityBlock[]
+  bookingReminders            BookingReminder[]
+  availabilitySlotsCreated    AvailabilitySlot[]
+  organizationMemberships     OrganizationMember[]
+  casesAsCustomer             ServiceCase[]          @relation("CaseCustomer")
+  casesAssignedOps            ServiceCase[]          @relation("CaseAssignedOps")
+  caseEvents                  CaseEvent[]
+  auditEvents                 AuditEvent[]
+  internalNotes               InternalNote[]
+  inspectionsAsCustomer       Inspection[]           @relation("InspectionCustomer")
+  inspectionsAsTechnician     Inspection[]           @relation("InspectionTechnician")
+  caseMediaOwned              CaseMedia[]            @relation("CaseMediaOwner")
+  caseMediaUploaded           CaseMedia[]            @relation("CaseMediaUploadedBy")
+  estimateApprovals           EstimateApproval[]
+  notifications               Notification[]
+  serviceHistory              ServiceHistory[]
+  orgDocumentsUploaded        OrganizationDocument[]
+  transportJobsAsDriver       TransportJob[]         @relation("TransportDriver")
+  transportJobsRequested      TransportJob[]         @relation("TransportRequestedBy")
+  transportJobsAsCustomer     TransportJob[]         @relation("TransportCustomer")
+  transportEvents             TransportEvent[]
+  casePartsAdded              CasePart[]
+  partsListingsCreated        PartsListing[]
+  partsOrdersAsCustomer       PartsOrder[]           @relation("PartsOrderCustomer")
+  partsOrdersPlaced           PartsOrder[]           @relation("PartsOrderOrderedBy")
+  partsOrderEvents            PartsOrderEvent[]
+  configSettingsCreated       ConfigSetting[]
+  paymentsAsCustomer          Payment[]              @relation("PaymentCustomer")
+  paymentsRecorded            Payment[]              @relation("PaymentRecordedBy")
+  refundsAsCustomer           Refund[]               @relation("RefundCustomer")
+  refundsActed                Refund[]               @relation("RefundActor")
+  payoutsAsBeneficiary        Payout[]               @relation("PayoutBeneficiary")
+  payoutsApproved             Payout[]               @relation("PayoutApprovedBy")
+  payoutsCompleted            Payout[]               @relation("PayoutCompletedBy")
+  adjustmentsAsCustomer       Adjustment[]           @relation("AdjustmentCustomer")
+  adjustmentsActed            Adjustment[]           @relation("AdjustmentActor")
+  ledgerEntriesAsCustomer     LedgerEntry[]          @relation("LedgerCustomer")
+  ledgerEntriesAsBeneficiary  LedgerEntry[]          @relation("LedgerBeneficiary")
+  ledgerEntriesCreated        LedgerEntry[]          @relation("LedgerCreatedBy")
+  driverProfile               DriverProfile?
+  partnerOverridesAsDriver    PartnerOverride[]      @relation("PartnerOverrideDriver")
+  partnerOverridesCreated     PartnerOverride[]      @relation("PartnerOverrideCreatedBy")
+  partnerApplicationsReviewed PartnerApplication[]
 
   @@map("users")
 }
@@ -150,15 +214,6 @@ enum RecordStatus {
   active
   inactive
   archived
-}
-
-enum StudentStatus {
-  Active
-  Inactive
-  Graduated
-  Transferred
-  Suspended
-  Archived
 }
 
 enum Gender {
@@ -869,23 +924,1232 @@ enum VehicleMake {
 }
 
 model Vehicle {
-  id            String         @id @default(uuid()) @db.Char(36)
-  vehicleNumber String         @map("vehicle_number") @db.VarChar(20)
-  vehicleType   VehicleType    @default(Bus) @map("vehicle_type")
-  vehicleMake   VehicleMake?   @map("vehicle_make")
-  capacity      Int            @default(50) @map("capacity")
-  driverId      String?        @map("driver_id") @db.Char(36)
-  driver        Staff?         @relation(fields: [driverId], references: [id], onDelete: SetNull)
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  status        Status         @default(Active) @map("status")
-  remarks       String?        @db.Text
-  createdById   String         @map("created_by") @db.Char(36)
-  user          User?          @relation(fields: [userId], references: [id])
-  userId        String?        @db.Char(36)
+  id            String       @id @default(uuid()) @db.Char(36)
+  vehicleNumber String       @map("vehicle_number") @db.VarChar(20)
+  vehicleType   VehicleType  @default(Bus) @map("vehicle_type")
+  vehicleMake   VehicleMake? @map("vehicle_make")
+  capacity      Int          @default(50) @map("capacity")
+  driverId      String?      @map("driver_id") @db.Char(36)
+  driver        Staff?       @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  status        Status       @default(Active) @map("status")
+  remarks       String?      @db.Text
+  createdById   String       @map("created_by") @db.Char(36)
+  user          User?        @relation(fields: [userId], references: [id])
+  userId        String?      @db.Char(36)
 
   @@unique([vehicleNumber])
   @@index([vehicleNumber])
   @@index([vehicleType])
   @@map("vehicles")
+}
+
+// ---------------------------------------------------------------------------
+// BlessRite service domain (ported from Supabase migrations).
+// Authorization stays on User / UserRole / AppRole / Privilege.
+// Customer cars are `customer_vehicles` so they do not collide with fleet `vehicles`.
+// ---------------------------------------------------------------------------
+
+/// Customer vehicle (year/make/model). Distinct from fleet `Vehicle`.
+model CustomerVehicle {
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @map("user_id") @db.Char(36)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year      Int?
+  make      String
+  model     String
+  vin       String?
+  plate     String?
+  colour    String?
+  mileage   Int?
+  photoUrl  String?  @map("photo_url")
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings       Booking[]
+  cases          ServiceCase[]
+  inspections    Inspection[]
+  caseMedia      CaseMedia[]
+  estimates      Estimate[]
+  serviceHistory ServiceHistory[]
+  transportJobs  TransportJob[]
+  ledgerEntries  LedgerEntry[]
+
+  @@index([userId])
+  @@map("customer_vehicles")
+}
+
+model RepairShop {
+  id            String   @id @default(uuid()) @db.Char(36)
+  userId        String   @map("user_id") @db.Char(36)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  address       String?  @db.Text
+  phone         String?
+  contactPerson String?  @map("contact_person")
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  bookings Booking[]
+
+  @@index([userId])
+  @@map("repair_shops")
+}
+
+model BusinessSetting {
+  key       String   @id
+  value     Decimal  @db.Decimal(14, 4)
+  label     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("business_settings")
+}
+
+model ServiceCatalog {
+  id          String   @id @default(uuid()) @db.Char(36)
+  name        String
+  serviceType String   @map("service_type")
+  isRoutine   Boolean  @default(true) @map("is_routine")
+  flatRate    Decimal  @default(0) @map("flat_rate") @db.Decimal(14, 2)
+  estMinutes  Int      @default(60) @map("est_minutes")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("service_catalog")
+}
+
+model AvailabilitySlot {
+  id          String   @id @default(uuid()) @db.Char(36)
+  startsAt    DateTime @map("starts_at")
+  endsAt      DateTime @map("ends_at")
+  slotKind    String   @default("Drop-off") @map("slot_kind")
+  capacity    Int      @default(1)
+  bookedCount Int      @default(0) @map("booked_count")
+  notes       String?  @db.Text
+  active      Boolean  @default(true)
+  createdById String?  @map("created_by") @db.Char(36)
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@index([startsAt])
+  @@index([createdById])
+  @@map("availability_slots")
+}
+
+model AvailabilityBlock {
+  id          String    @id @default(uuid()) @db.Char(36)
+  title       String    @default("Unavailable")
+  blockDate   DateTime  @map("block_date") @db.Date
+  allDay      Boolean   @default(true) @map("all_day")
+  startTime   DateTime? @map("start_time") @db.Time(0)
+  endTime     DateTime? @map("end_time") @db.Time(0)
+  reason      String?   @db.Text
+  createdById String?   @map("created_by") @db.Char(36)
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([blockDate])
+  @@index([createdById])
+  @@map("availability_blocks")
+}
+
+model CaseState {
+  state         String  @id
+  sortOrder     Int     @map("sort_order")
+  customerLabel String  @map("customer_label")
+  isTerminal    Boolean @default(false) @map("is_terminal")
+
+  cases           ServiceCase[]
+  transitionsFrom CaseTransition[] @relation("CaseTransitionFrom")
+  transitionsTo   CaseTransition[] @relation("CaseTransitionTo")
+
+  @@map("case_states")
+}
+
+model CaseTransition {
+  id             String    @id @default(uuid()) @db.Char(36)
+  fromState      String    @map("from_state")
+  toState        String    @map("to_state")
+  requiresReason Boolean   @default(false) @map("requires_reason")
+  from           CaseState @relation("CaseTransitionFrom", fields: [fromState], references: [state], onDelete: Restrict)
+  to             CaseState @relation("CaseTransitionTo", fields: [toState], references: [state], onDelete: Restrict)
+
+  @@unique([fromState, toState])
+  @@map("case_transitions")
+}
+
+model Organization {
+  id              String    @id @default(uuid()) @db.Char(36)
+  orgType         String    @map("org_type")
+  legalName       String    @map("legal_name")
+  operatingName   String?   @map("operating_name")
+  contactName     String?   @map("contact_name")
+  contactEmail    String?   @map("contact_email")
+  contactPhone    String?   @map("contact_phone")
+  address         String?   @db.Text
+  serviceArea     String?   @map("service_area")
+  /// String array stored as JSON (MySQL has no text[]).
+  capabilities    Json      @default("[]")
+  approvalStatus  String    @default("Pending") @map("approval_status")
+  agreementStatus String    @default("Not Started") @map("agreement_status")
+  active          Boolean   @default(true)
+  notes           String?   @db.Text
+  legacy          Boolean   @default(false)
+  operatingHours  String?   @map("operating_hours")
+  latitude        Float?
+  longitude       Float?
+  suspendedAt     DateTime? @map("suspended_at")
+  statusReason    String?   @map("status_reason") @db.Text
+  commissionRate  Decimal?  @map("commission_rate") @db.Decimal(8, 4)
+  payoutRule      String?   @map("payout_rule") @db.Text
+  payoutMethod    String?   @map("payout_method")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  members          OrganizationMember[]
+  documents        OrganizationDocument[]
+  assignedCases    ServiceCase[]
+  transportJobs    TransportJob[]
+  partsListings    PartsListing[]
+  suppliedOrders   PartsOrder[]           @relation("PartsOrderSupplier")
+  orderingOrders   PartsOrder[]           @relation("PartsOrderOrderingOrg")
+  payouts          Payout[]
+  partnerOverrides PartnerOverride[]
+  ledgerEntries    LedgerEntry[]
+
+  @@index([orgType])
+  @@index([approvalStatus])
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid()) @db.Char(36)
+  organizationId String       @map("organization_id") @db.Char(36)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String       @map("user_id") @db.Char(36)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgRole        String       @default("member") @map("org_role")
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model OrganizationDocument {
+  id             String       @id @default(uuid()) @db.Char(36)
+  organizationId String       @map("organization_id") @db.Char(36)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  storagePath    String       @map("storage_path")
+  fileName       String       @map("file_name")
+  docType        String       @default("Other") @map("doc_type")
+  uploadedById   String?      @map("uploaded_by") @db.Char(36)
+  uploadedBy     User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  expiresOn      DateTime?    @map("expires_on") @db.Date
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([organizationId])
+  @@index([uploadedById])
+  @@map("organization_documents")
+}
+
+/// Service case. Named ServiceCase so it does not clash with the JS `case` keyword.
+model ServiceCase {
+  id                 String           @id @default(uuid()) @db.Char(36)
+  caseRef            String           @unique @map("case_ref")
+  customerId         String?          @map("customer_id") @db.Char(36)
+  customer           User?            @relation("CaseCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  vehicleId          String?          @map("vehicle_id") @db.Char(36)
+  vehicle            CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  origin             String           @default("booking")
+  serviceSummary     String           @map("service_summary") @db.Text
+  state              String           @default("Requested")
+  caseState          CaseState        @relation(fields: [state], references: [state], onDelete: Restrict)
+  priority           String           @default("Normal")
+  assignedOpsId      String?          @map("assigned_ops_id") @db.Char(36)
+  assignedOps        User?            @relation("CaseAssignedOps", fields: [assignedOpsId], references: [id], onDelete: SetNull)
+  assignedOrgId      String?          @map("assigned_org_id") @db.Char(36)
+  assignedOrg        Organization?    @relation(fields: [assignedOrgId], references: [id], onDelete: SetNull)
+  stateChangeReason  String?          @map("state_change_reason") @db.Text
+  legacy             Boolean          @default(false)
+  shopResponse       String           @default("Pending") @map("shop_response")
+  shopResponseReason String?          @map("shop_response_reason") @db.Text
+  shopRespondedAt    DateTime?        @map("shop_responded_at")
+  isDemo             Boolean          @default(false) @map("is_demo")
+  openedAt           DateTime         @default(now()) @map("opened_at")
+  closedAt           DateTime?        @map("closed_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  links             CaseLink[]
+  events            CaseEvent[]
+  auditEvents       AuditEvent[]
+  bookings          Booking[]
+  roadsideRequests  RoadsideRequest[]
+  estimates         Estimate[]
+  invoices          Invoice[]
+  messages          Message[]
+  bookingEvents     BookingEvent[]
+  bookingReminders  BookingReminder[]
+  internalNotes     InternalNote[]
+  inspections       Inspection[]
+  media             CaseMedia[]
+  estimateApprovals EstimateApproval[]
+  notifications     Notification[]
+  serviceHistory    ServiceHistory[]
+  transportJobs     TransportJob[]
+  transportEvents   TransportEvent[]
+  parts             CasePart[]
+  partsOrders       PartsOrder[]
+  payments          Payment[]
+  payouts           Payout[]
+  refunds           Refund[]
+  adjustments       Adjustment[]
+  ledgerEntries     LedgerEntry[]
+
+  @@index([customerId])
+  @@index([state])
+  @@index([assignedOrgId])
+  @@index([vehicleId])
+  @@map("cases")
+}
+
+model CaseLink {
+  id          String      @id @default(uuid()) @db.Char(36)
+  caseId      String      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  recordType  String      @map("record_type")
+  recordId    String      @map("record_id") @db.Char(36)
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@unique([caseId, recordType, recordId])
+  @@index([caseId])
+  @@map("case_links")
+}
+
+model CaseEvent {
+  id              String      @id @default(uuid()) @db.Char(36)
+  caseId          String      @map("case_id") @db.Char(36)
+  serviceCase     ServiceCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  eventType       String      @map("event_type")
+  actorId         String?     @map("actor_id") @db.Char(36)
+  actor           User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole       String?     @map("actor_role")
+  customerVisible Boolean     @default(true) @map("customer_visible")
+  title           String
+  body            String?     @db.Text
+  occurredAt      DateTime    @default(now()) @map("occurred_at")
+
+  @@index([caseId, occurredAt])
+  @@index([actorId])
+  @@map("case_events")
+}
+
+model AuditEvent {
+  id          String       @id @default(uuid()) @db.Char(36)
+  actorId     String?      @map("actor_id") @db.Char(36)
+  actor       User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action      String
+  entityType  String       @map("entity_type")
+  entityId    String?      @map("entity_id") @db.Char(36)
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  before      Json?
+  after       Json?
+  reason      String?      @db.Text
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([caseId])
+  @@index([actorId])
+  @@map("audit_events")
+}
+
+model Booking {
+  id                  String            @id @default(uuid()) @db.Char(36)
+  userId              String            @map("user_id") @db.Char(36)
+  user                User              @relation("BookingCustomer", fields: [userId], references: [id], onDelete: Cascade)
+  vehicleId           String?           @map("vehicle_id") @db.Char(36)
+  vehicle             CustomerVehicle?  @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  shopId              String?           @map("shop_id") @db.Char(36)
+  shop                RepairShop?       @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  serviceType         String            @map("service_type")
+  description         String?           @db.Text
+  preferredDate       DateTime?         @map("preferred_date") @db.Date
+  preferredTime       String?           @map("preferred_time")
+  location            String?           @db.Text
+  needsPickup         Boolean           @default(false) @map("needs_pickup")
+  status              String            @default("Requested")
+  scheduledAt         DateTime?         @map("scheduled_at")
+  assignedStaffId     String?           @map("assigned_staff_id") @db.Char(36)
+  assignedStaff       User?             @relation("BookingAssignedStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  routingNote         String?           @map("routing_note") @db.Text
+  slotId              String?           @map("slot_id") @db.Char(36)
+  slot                AvailabilitySlot? @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  caseId              String?           @map("case_id") @db.Char(36)
+  serviceCase         ServiceCase?      @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  specialInstructions String?           @map("special_instructions") @db.Text
+  unsureService       Boolean           @default(false) @map("unsure_service")
+  createdByStaffId    String?           @map("created_by_staff_id") @db.Char(36)
+  createdByStaff      User?             @relation("BookingCreatedByStaff", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  events         BookingEvent[]
+  estimates      Estimate[]
+  invoices       Invoice[]
+  messages       Message[]
+  reminders      BookingReminder[]
+  inspections    Inspection[]
+  media          CaseMedia[]
+  serviceHistory ServiceHistory[]
+  ledgerEntries  LedgerEntry[]
+
+  @@index([userId])
+  @@index([vehicleId])
+  @@index([caseId])
+  @@index([slotId])
+  @@map("bookings")
+}
+
+model BookingEvent {
+  id          String       @id @default(uuid()) @db.Char(36)
+  bookingId   String       @map("booking_id") @db.Char(36)
+  booking     Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status      String
+  note        String?      @db.Text
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([bookingId])
+  @@index([caseId])
+  @@map("booking_events")
+}
+
+model BookingReminder {
+  id          String       @id @default(uuid()) @db.Char(36)
+  bookingId   String       @map("booking_id") @db.Char(36)
+  booking     Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId      String       @map("user_id") @db.Char(36)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  remindAt    DateTime     @map("remind_at")
+  message     String       @db.Text
+  status      String       @default("Pending")
+  sentAt      DateTime?    @map("sent_at")
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@unique([bookingId, remindAt])
+  @@index([userId])
+  @@index([caseId])
+  @@map("booking_reminders")
+}
+
+model RoadsideRequest {
+  id           String       @id @default(uuid()) @db.Char(36)
+  userId       String?      @map("user_id") @db.Char(36)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  issueType    String       @map("issue_type")
+  description  String?      @db.Text
+  location     String?      @db.Text
+  latitude     Float?
+  longitude    Float?
+  contactName  String?      @map("contact_name")
+  contactPhone String       @map("contact_phone")
+  vehicleInfo  String?      @map("vehicle_info")
+  status       String       @default("Requested")
+  caseId       String?      @map("case_id") @db.Char(36)
+  serviceCase  ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([caseId])
+  @@map("roadside_requests")
+}
+
+model Message {
+  id          String       @id @default(uuid()) @db.Char(36)
+  customerId  String       @map("customer_id") @db.Char(36)
+  customer    User         @relation("MessageCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  senderId    String       @map("sender_id") @db.Char(36)
+  sender      User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  fromStaff   Boolean      @default(false) @map("from_staff")
+  bookingId   String?      @map("booking_id") @db.Char(36)
+  booking     Booking?     @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  body        String       @db.Text
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([customerId])
+  @@index([bookingId])
+  @@index([caseId])
+  @@map("messages")
+}
+
+model Inspection {
+  id              String           @id @default(uuid()) @db.Char(36)
+  caseId          String           @map("case_id") @db.Char(36)
+  serviceCase     ServiceCase      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  bookingId       String?          @map("booking_id") @db.Char(36)
+  booking         Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  vehicleId       String?          @map("vehicle_id") @db.Char(36)
+  vehicle         CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  customerId      String?          @map("customer_id") @db.Char(36)
+  customer        User?            @relation("InspectionCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  technicianId    String?          @map("technician_id") @db.Char(36)
+  technician      User?            @relation("InspectionTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+  title           String           @default("Inspection & diagnostic report")
+  customerConcern String?          @map("customer_concern") @db.Text
+  findings        String?          @db.Text
+  troubleCodes    Json             @default("[]") @map("trouble_codes")
+  testsPerformed  String?          @map("tests_performed") @db.Text
+  recommendations String?          @db.Text
+  partsRequired   String?          @map("parts_required") @db.Text
+  labourHours     Decimal          @default(0) @map("labour_hours") @db.Decimal(8, 2)
+  finalResult     String?          @map("final_result") @db.Text
+  mileage         Int?
+  status          String           @default("Draft")
+  publishedAt     DateTime?        @map("published_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  estimates      Estimate[]
+  media          CaseMedia[]
+  serviceHistory ServiceHistory[]
+
+  @@index([caseId])
+  @@index([vehicleId])
+  @@map("inspections")
+}
+
+model Estimate {
+  id                 String           @id @default(uuid()) @db.Char(36)
+  bookingId          String           @map("booking_id") @db.Char(36)
+  booking            Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId             String           @map("user_id") @db.Char(36)
+  user               User             @relation("EstimateCustomer", fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  description        String?          @db.Text
+  partsCost          Decimal          @default(0) @map("parts_cost") @db.Decimal(14, 2)
+  labourCost         Decimal          @default(0) @map("labour_cost") @db.Decimal(14, 2)
+  tax                Decimal          @default(0) @db.Decimal(14, 2)
+  total              Decimal          @default(0) @db.Decimal(14, 2)
+  decision           String           @default("Pending")
+  decidedAt          DateTime?        @map("decided_at")
+  version            Int              @default(1)
+  parentEstimateId   String?          @map("parent_estimate_id") @db.Char(36)
+  parentEstimate     Estimate?        @relation("EstimateRevision", fields: [parentEstimateId], references: [id], onDelete: SetNull)
+  revisions          Estimate[]       @relation("EstimateRevision")
+  estimateKind       String           @default("initial") @map("estimate_kind")
+  status             String           @default("Draft")
+  inspectionId       String?          @map("inspection_id") @db.Char(36)
+  inspection         Inspection?      @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+  otherCharges       Decimal          @default(0) @map("other_charges") @db.Decimal(14, 2)
+  subtotal           Decimal          @default(0) @db.Decimal(14, 2)
+  sentAt             DateTime?        @map("sent_at")
+  decidedById        String?          @map("decided_by") @db.Char(36)
+  decidedBy          User?            @relation("EstimateDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+  decisionIsOverride Boolean          @default(false) @map("decision_is_override")
+  vehicleId          String?          @map("vehicle_id") @db.Char(36)
+  vehicle            CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  caseId             String?          @map("case_id") @db.Char(36)
+  serviceCase        ServiceCase?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  createdAt          DateTime         @default(now()) @map("created_at")
+
+  items     EstimateItem[]
+  approvals EstimateApproval[]
+  media     CaseMedia[]
+
+  @@index([bookingId])
+  @@index([userId])
+  @@index([caseId])
+  @@index([inspectionId])
+  @@map("estimates")
+}
+
+model EstimateItem {
+  id          String   @id @default(uuid()) @db.Char(36)
+  estimateId  String   @map("estimate_id") @db.Char(36)
+  estimate    Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  kind        String   @default("Parts")
+  description String   @db.Text
+  quantity    Decimal  @default(1) @db.Decimal(14, 2)
+  unitPrice   Decimal  @default(0) @map("unit_price") @db.Decimal(14, 2)
+  amount      Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([estimateId])
+  @@map("estimate_items")
+}
+
+model EstimateApproval {
+  id              String       @id @default(uuid()) @db.Char(36)
+  estimateId      String       @map("estimate_id") @db.Char(36)
+  estimate        Estimate     @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  caseId          String?      @map("case_id") @db.Char(36)
+  serviceCase     ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  estimateVersion Int          @map("estimate_version")
+  decision        String
+  actorId         String       @map("actor_id") @db.Char(36)
+  actor           User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  actorRole       String       @map("actor_role")
+  isOverride      Boolean      @default(false) @map("is_override")
+  reason          String?      @db.Text
+  decidedAt       DateTime     @default(now()) @map("decided_at")
+
+  @@index([estimateId])
+  @@index([caseId])
+  @@map("estimate_approvals")
+}
+
+model Invoice {
+  id               String       @id @default(uuid()) @db.Char(36)
+  invoiceNumber    String       @unique @map("invoice_number")
+  bookingId        String?      @map("booking_id") @db.Char(36)
+  booking          Booking?     @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  userId           String       @map("user_id") @db.Char(36)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  title            String
+  notes            String?      @db.Text
+  status           String       @default("Draft")
+  autoGenerated    Boolean      @default(false) @map("auto_generated")
+  subtotal         Decimal      @default(0) @db.Decimal(14, 2)
+  tax              Decimal      @default(0) @db.Decimal(14, 2)
+  total            Decimal      @default(0) @db.Decimal(14, 2)
+  dueDate          DateTime?    @map("due_date") @db.Date
+  issuedAt         DateTime?    @map("issued_at")
+  paidAt           DateTime?    @map("paid_at")
+  caseId           String?      @map("case_id") @db.Char(36)
+  serviceCase      ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  amountPaid       Decimal      @default(0) @map("amount_paid") @db.Decimal(14, 2)
+  amountRefunded   Decimal      @default(0) @map("amount_refunded") @db.Decimal(14, 2)
+  adjustmentsTotal Decimal      @default(0) @map("adjustments_total") @db.Decimal(14, 2)
+  balanceDue       Decimal      @default(0) @map("balance_due") @db.Decimal(14, 2)
+  paymentStatus    String       @default("Unpaid") @map("payment_status")
+  taxRateApplied   Decimal?     @map("tax_rate_applied") @db.Decimal(8, 4)
+  isDemo           Boolean      @default(false) @map("is_demo")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  items          InvoiceItem[]
+  serviceHistory ServiceHistory[]
+  payments       Payment[]
+  refunds        Refund[]
+  adjustments    Adjustment[]
+  ledgerEntries  LedgerEntry[]
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([caseId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid()) @db.Char(36)
+  invoiceId   String   @map("invoice_id") @db.Char(36)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  kind        String   @default("Service")
+  description String   @db.Text
+  quantity    Decimal  @default(1) @db.Decimal(14, 2)
+  unitPrice   Decimal  @default(0) @map("unit_price") @db.Decimal(14, 2)
+  amount      Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model InternalNote {
+  id          String       @id @default(uuid()) @db.Char(36)
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  recordType  String       @map("record_type")
+  recordId    String?      @map("record_id") @db.Char(36)
+  body        String       @db.Text
+  authorId    String?      @map("author_id") @db.Char(36)
+  author      User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([caseId])
+  @@index([authorId])
+  @@map("internal_notes")
+}
+
+model CaseMedia {
+  id              String           @id @default(uuid()) @db.Char(36)
+  caseId          String?          @map("case_id") @db.Char(36)
+  serviceCase     ServiceCase?     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  bookingId       String?          @map("booking_id") @db.Char(36)
+  booking         Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  vehicleId       String?          @map("vehicle_id") @db.Char(36)
+  vehicle         CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  inspectionId    String?          @map("inspection_id") @db.Char(36)
+  inspection      Inspection?      @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  estimateId      String?          @map("estimate_id") @db.Char(36)
+  estimate        Estimate?        @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  transportJobId  String?          @map("transport_job_id") @db.Char(36)
+  transportJob    TransportJob?    @relation(fields: [transportJobId], references: [id], onDelete: SetNull)
+  ownerId         String?          @map("owner_id") @db.Char(36)
+  owner           User?            @relation("CaseMediaOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  storagePath     String           @map("storage_path")
+  fileName        String           @map("file_name")
+  mimeType        String?          @map("mime_type")
+  sizeBytes       BigInt?          @map("size_bytes")
+  kind            String           @default("photo")
+  caption         String?          @db.Text
+  customerVisible Boolean          @default(true) @map("customer_visible")
+  uploadedById    String?          @map("uploaded_by") @db.Char(36)
+  uploadedBy      User?            @relation("CaseMediaUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@index([caseId])
+  @@index([inspectionId])
+  @@index([transportJobId])
+  @@map("case_media")
+}
+
+model Notification {
+  id          String       @id @default(uuid()) @db.Char(36)
+  userId      String       @map("user_id") @db.Char(36)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  eventType   String       @map("event_type")
+  title       String
+  body        String?      @db.Text
+  linkPath    String?      @map("link_path")
+  readAt      DateTime?    @map("read_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([userId, readAt])
+  @@index([caseId])
+  @@map("notifications")
+}
+
+model ServiceHistory {
+  id              String           @id @default(uuid()) @db.Char(36)
+  vehicleId       String?          @map("vehicle_id") @db.Char(36)
+  vehicle         CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  customerId      String           @map("customer_id") @db.Char(36)
+  customer        User             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  caseId          String?          @unique @map("case_id") @db.Char(36)
+  serviceCase     ServiceCase?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  caseRef         String?          @map("case_ref")
+  bookingId       String?          @map("booking_id") @db.Char(36)
+  booking         Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  inspectionId    String?          @map("inspection_id") @db.Char(36)
+  inspection      Inspection?      @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+  invoiceId       String?          @map("invoice_id") @db.Char(36)
+  invoice         Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  serviceDate     DateTime         @default(dbgenerated("(CURDATE())")) @map("service_date") @db.Date
+  mileage         Int?
+  serviceSummary  String           @map("service_summary") @db.Text
+  findings        String?          @db.Text
+  workPerformed   String?          @map("work_performed") @db.Text
+  partsReplaced   String?          @map("parts_replaced") @db.Text
+  recommendations String?          @db.Text
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@index([vehicleId])
+  @@index([customerId])
+  @@map("service_history")
+}
+
+model TransportStatus {
+  status        String  @id
+  sortOrder     Int     @map("sort_order")
+  customerLabel String  @map("customer_label")
+  isTerminal    Boolean @default(false) @map("is_terminal")
+
+  jobs            TransportJob[]
+  transitionsFrom TransportTransition[] @relation("TransportTransitionFrom")
+  transitionsTo   TransportTransition[] @relation("TransportTransitionTo")
+
+  @@map("transport_statuses")
+}
+
+model TransportTransition {
+  fromStatus     String          @map("from_status")
+  toStatus       String          @map("to_status")
+  requiresReason Boolean         @default(false) @map("requires_reason")
+  from           TransportStatus @relation("TransportTransitionFrom", fields: [fromStatus], references: [status], onDelete: Restrict)
+  to             TransportStatus @relation("TransportTransitionTo", fields: [toStatus], references: [status], onDelete: Restrict)
+
+  @@id([fromStatus, toStatus])
+  @@map("transport_transitions")
+}
+
+model TransportJob {
+  id                 String           @id @default(uuid()) @db.Char(36)
+  caseId             String           @map("case_id") @db.Char(36)
+  serviceCase        ServiceCase      @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  jobType            String           @map("job_type")
+  vehicleId          String?          @map("vehicle_id") @db.Char(36)
+  vehicle            CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  vehicleSummary     String?          @map("vehicle_summary")
+  pickupAddress      String?          @map("pickup_address") @db.Text
+  pickupLat          Float?           @map("pickup_lat")
+  pickupLng          Float?           @map("pickup_lng")
+  destinationAddress String?          @map("destination_address") @db.Text
+  destinationLat     Float?           @map("destination_lat")
+  destinationLng     Float?           @map("destination_lng")
+  contactName        String?          @map("contact_name")
+  contactPhone       String?          @map("contact_phone")
+  instructions       String?          @db.Text
+  scheduledAt        DateTime?        @map("scheduled_at")
+  acceptedAt         DateTime?        @map("accepted_at")
+  enRouteAt          DateTime?        @map("en_route_at")
+  arrivedAt          DateTime?        @map("arrived_at")
+  pickedUpAt         DateTime?        @map("picked_up_at")
+  deliveredAt        DateTime?        @map("delivered_at")
+  completedAt        DateTime?        @map("completed_at")
+  assignedDriverId   String?          @map("assigned_driver_id") @db.Char(36)
+  assignedDriver     User?            @relation("TransportDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  assignedOrgId      String?          @map("assigned_org_id") @db.Char(36)
+  assignedOrg        Organization?    @relation(fields: [assignedOrgId], references: [id], onDelete: SetNull)
+  openToDrivers      Boolean          @default(false) @map("open_to_drivers")
+  status             String           @default("Requested")
+  transportStatus    TransportStatus  @relation(fields: [status], references: [status], onDelete: Restrict)
+  statusNote         String?          @map("status_note") @db.Text
+  conditionNotes     String?          @map("condition_notes") @db.Text
+  recipientName      String?          @map("recipient_name")
+  signaturePath      String?          @map("signature_path")
+  driverNotes        String?          @map("driver_notes") @db.Text
+  driverLastLat      Float?           @map("driver_last_lat")
+  driverLastLng      Float?           @map("driver_last_lng")
+  driverLastAt       DateTime?        @map("driver_last_at")
+  requestedById      String?          @map("requested_by") @db.Char(36)
+  requestedBy        User?            @relation("TransportRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  customerId         String?          @map("customer_id") @db.Char(36)
+  customer           User?            @relation("TransportCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  partsOrderId       String?          @map("parts_order_id") @db.Char(36)
+  partsOrder         PartsOrder?      @relation(fields: [partsOrderId], references: [id], onDelete: SetNull)
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  events        TransportEvent[]
+  media         CaseMedia[]
+  ledgerEntries LedgerEntry[]
+
+  @@index([caseId])
+  @@index([assignedDriverId])
+  @@index([partsOrderId])
+  @@map("transport_jobs")
+}
+
+model TransportEvent {
+  id             String       @id @default(uuid()) @db.Char(36)
+  transportJobId String       @map("transport_job_id") @db.Char(36)
+  transportJob   TransportJob @relation(fields: [transportJobId], references: [id], onDelete: Cascade)
+  caseId         String       @map("case_id") @db.Char(36)
+  serviceCase    ServiceCase  @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  eventType      String       @map("event_type")
+  status         String?
+  notes          String?      @db.Text
+  isIncident     Boolean      @default(false) @map("is_incident")
+  latitude       Float?
+  longitude      Float?
+  actorId        String?      @map("actor_id") @db.Char(36)
+  actor          User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  occurredAt     DateTime     @default(now()) @map("occurred_at")
+
+  @@index([transportJobId])
+  @@index([caseId])
+  @@map("transport_events")
+}
+
+model CasePart {
+  id          String      @id @default(uuid()) @db.Char(36)
+  caseId      String      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  description String      @db.Text
+  partNumber  String?     @map("part_number")
+  quantity    Decimal     @default(1) @db.Decimal(14, 2)
+  notes       String?     @db.Text
+  addedById   String?     @map("added_by") @db.Char(36)
+  addedBy     User?       @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@index([caseId])
+  @@map("case_parts")
+}
+
+model PartsListing {
+  id              String       @id @default(uuid()) @db.Char(36)
+  supplierOrgId   String       @map("supplier_org_id") @db.Char(36)
+  supplierOrg     Organization @relation(fields: [supplierOrgId], references: [id], onDelete: Restrict)
+  sku             String?
+  partNumber      String?      @map("part_number")
+  title           String
+  description     String?      @db.Text
+  manufacturer    String?
+  fitment         String?
+  make            String?
+  model           String?
+  yearFrom        Int?         @map("year_from")
+  yearTo          Int?         @map("year_to")
+  classification  String       @default("Aftermarket")
+  condition       String       @default("New")
+  price           Decimal      @default(0) @db.Decimal(14, 2)
+  quantity        Int          @default(0)
+  location        String?
+  fulfilmentHours Int          @default(24) @map("fulfilment_hours")
+  active          Boolean      @default(true)
+  createdById     String?      @map("created_by") @db.Char(36)
+  createdBy       User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  orders PartsOrder[]
+
+  @@index([supplierOrgId])
+  @@map("parts_listings")
+}
+
+model PartsOrderStatus {
+  status          String  @id
+  sortOrder       Int     @map("sort_order")
+  customerLabel   String  @map("customer_label")
+  customerVisible Boolean @default(false) @map("customer_visible")
+  isTerminal      Boolean @default(false) @map("is_terminal")
+
+  orders          PartsOrder[]
+  transitionsFrom PartsOrderTransition[] @relation("PartsOrderTransitionFrom")
+  transitionsTo   PartsOrderTransition[] @relation("PartsOrderTransitionTo")
+
+  @@map("parts_order_statuses")
+}
+
+model PartsOrderTransition {
+  fromStatus     String           @map("from_status")
+  toStatus       String           @map("to_status")
+  requiresReason Boolean          @default(false) @map("requires_reason")
+  from           PartsOrderStatus @relation("PartsOrderTransitionFrom", fields: [fromStatus], references: [status], onDelete: Restrict)
+  to             PartsOrderStatus @relation("PartsOrderTransitionTo", fields: [toStatus], references: [status], onDelete: Restrict)
+
+  @@id([fromStatus, toStatus])
+  @@map("parts_order_transitions")
+}
+
+model PartsOrder {
+  id                   String           @id @default(uuid()) @db.Char(36)
+  orderRef             String           @unique @map("order_ref")
+  caseId               String           @map("case_id") @db.Char(36)
+  serviceCase          ServiceCase      @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  customerId           String?          @map("customer_id") @db.Char(36)
+  customer             User?            @relation("PartsOrderCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  supplierOrgId        String           @map("supplier_org_id") @db.Char(36)
+  supplierOrg          Organization     @relation("PartsOrderSupplier", fields: [supplierOrgId], references: [id], onDelete: Restrict)
+  orderingOrgId        String?          @map("ordering_org_id") @db.Char(36)
+  orderingOrg          Organization?    @relation("PartsOrderOrderingOrg", fields: [orderingOrgId], references: [id], onDelete: SetNull)
+  listingId            String           @map("listing_id") @db.Char(36)
+  listing              PartsListing     @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  orderedById          String           @map("ordered_by") @db.Char(36)
+  orderedBy            User             @relation("PartsOrderOrderedBy", fields: [orderedById], references: [id], onDelete: Restrict)
+  quantity             Int
+  requestedSnapshot    Json             @map("requested_snapshot")
+  confirmedSnapshot    Json?            @map("confirmed_snapshot")
+  unitPrice            Decimal?         @map("unit_price") @db.Decimal(14, 2)
+  subtotal             Decimal?         @db.Decimal(14, 2)
+  tax                  Decimal?         @db.Decimal(14, 2)
+  fees                 Decimal?         @db.Decimal(14, 2)
+  total                Decimal?         @db.Decimal(14, 2)
+  expectedFulfilmentAt DateTime?        @map("expected_fulfilment_at")
+  destinationType      String           @default("repair_shop") @map("destination_type")
+  destinationAddress   String?          @map("destination_address") @db.Text
+  recipientName        String?          @map("recipient_name")
+  notes                String?          @db.Text
+  status               String           @default("Requested")
+  orderStatus          PartsOrderStatus @relation(fields: [status], references: [status], onDelete: Restrict)
+  statusReason         String?          @map("status_reason") @db.Text
+  exceptionNote        String?          @map("exception_note") @db.Text
+  exceptionAt          DateTime?        @map("exception_at")
+  payoutStatus         String           @default("Not Due") @map("payout_status")
+  confirmedAt          DateTime?        @map("confirmed_at")
+  readyAt              DateTime?        @map("ready_at")
+  deliveredAt          DateTime?        @map("delivered_at")
+  completedAt          DateTime?        @map("completed_at")
+  cancelledAt          DateTime?        @map("cancelled_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  events        PartsOrderEvent[]
+  transportJobs TransportJob[]
+  ledgerEntries LedgerEntry[]
+
+  @@index([caseId])
+  @@index([supplierOrgId])
+  @@index([listingId])
+  @@map("parts_orders")
+}
+
+model PartsOrderEvent {
+  id         String     @id @default(uuid()) @db.Char(36)
+  orderId    String     @map("order_id") @db.Char(36)
+  order      PartsOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  eventType  String     @map("event_type")
+  fromStatus String?    @map("from_status")
+  toStatus   String?    @map("to_status")
+  reason     String?    @db.Text
+  actorId    String?    @map("actor_id") @db.Char(36)
+  actor      User?      @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  occurredAt DateTime   @default(now()) @map("occurred_at")
+
+  @@index([orderId])
+  @@map("parts_order_events")
+}
+
+model ConfigSetting {
+  id            String   @id @default(uuid()) @db.Char(36)
+  key           String
+  category      String   @default("general")
+  label         String
+  unit          String?
+  value         Decimal? @db.Decimal(14, 4)
+  valueText     String?  @map("value_text") @db.Text
+  previousValue Decimal? @map("previous_value") @db.Decimal(14, 4)
+  previousText  String?  @map("previous_text") @db.Text
+  effectiveFrom DateTime @default(now()) @map("effective_from")
+  reason        String?  @db.Text
+  createdById   String?  @map("created_by") @db.Char(36)
+  createdBy     User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([key, effectiveFrom])
+  @@map("config_settings")
+}
+
+model Payment {
+  id            String       @id @default(uuid()) @db.Char(36)
+  invoiceId     String       @map("invoice_id") @db.Char(36)
+  invoice       Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  caseId        String?      @map("case_id") @db.Char(36)
+  serviceCase   ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  customerId    String?      @map("customer_id") @db.Char(36)
+  customer      User?        @relation("PaymentCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  amount        Decimal      @db.Decimal(14, 2)
+  method        String
+  status        String
+  reference     String?
+  providerFee   Decimal      @default(0) @map("provider_fee") @db.Decimal(14, 2)
+  failureReason String?      @map("failure_reason") @db.Text
+  receivedAt    DateTime     @default(now()) @map("received_at")
+  recordedById  String?      @map("recorded_by") @db.Char(36)
+  recordedBy    User?        @relation("PaymentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  refunds       Refund[]
+  ledgerEntries LedgerEntry[]
+
+  @@index([invoiceId])
+  @@index([caseId])
+  @@index([customerId])
+  @@map("payments")
+}
+
+model Refund {
+  id          String       @id @default(uuid()) @db.Char(36)
+  paymentId   String       @map("payment_id") @db.Char(36)
+  payment     Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  invoiceId   String       @map("invoice_id") @db.Char(36)
+  invoice     Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  customerId  String?      @map("customer_id") @db.Char(36)
+  customer    User?        @relation("RefundCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  amount      Decimal      @db.Decimal(14, 2)
+  reason      String       @db.Text
+  reference   String?
+  actorId     String?      @map("actor_id") @db.Char(36)
+  actor       User?        @relation("RefundActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  ledgerEntries LedgerEntry[]
+
+  @@index([paymentId])
+  @@index([invoiceId])
+  @@map("refunds")
+}
+
+model Payout {
+  id                String        @id @default(uuid()) @db.Char(36)
+  beneficiaryType   String        @map("beneficiary_type")
+  orgId             String?       @map("org_id") @db.Char(36)
+  organization      Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  beneficiaryUserId String?       @map("beneficiary_user_id") @db.Char(36)
+  beneficiaryUser   User?         @relation("PayoutBeneficiary", fields: [beneficiaryUserId], references: [id], onDelete: SetNull)
+  caseId            String?       @map("case_id") @db.Char(36)
+  serviceCase       ServiceCase?  @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  /// Polymorphic source: invoice, parts_order, or transport_job.
+  sourceType        String        @map("source_type")
+  sourceId          String        @map("source_id") @db.Char(36)
+  gross             Decimal       @default(0) @db.Decimal(14, 2)
+  fees              Decimal       @default(0) @db.Decimal(14, 2)
+  taxes             Decimal       @default(0) @db.Decimal(14, 2)
+  adjustments       Decimal       @default(0) @db.Decimal(14, 2)
+  net               Decimal       @default(0) @db.Decimal(14, 2)
+  status            String        @default("Payout Pending")
+  statusReason      String?       @map("status_reason") @db.Text
+  ruleSnapshot      Json?         @map("rule_snapshot")
+  approvedById      String?       @map("approved_by") @db.Char(36)
+  approvedBy        User?         @relation("PayoutApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt        DateTime?     @map("approved_at")
+  completedById     String?       @map("completed_by") @db.Char(36)
+  completedBy       User?         @relation("PayoutCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  completedAt       DateTime?     @map("completed_at")
+  paidOn            DateTime?     @map("paid_on") @db.Date
+  method            String?
+  reference         String?
+  evidencePath      String?       @map("evidence_path")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  adjustmentRows Adjustment[]
+  ledgerEntries  LedgerEntry[]
+
+  @@unique([sourceType, sourceId, beneficiaryType])
+  @@index([orgId])
+  @@index([beneficiaryUserId])
+  @@index([caseId])
+  @@map("payouts")
+}
+
+model Adjustment {
+  id          String       @id @default(uuid()) @db.Char(36)
+  target      String
+  invoiceId   String?      @map("invoice_id") @db.Char(36)
+  invoice     Invoice?     @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  payoutId    String?      @map("payout_id") @db.Char(36)
+  payout      Payout?      @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  caseId      String?      @map("case_id") @db.Char(36)
+  serviceCase ServiceCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  customerId  String?      @map("customer_id") @db.Char(36)
+  customer    User?        @relation("AdjustmentCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  amount      Decimal      @db.Decimal(14, 2)
+  reason      String       @db.Text
+  reference   String?
+  actorId     String?      @map("actor_id") @db.Char(36)
+  actor       User?        @relation("AdjustmentActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  ledgerEntries LedgerEntry[]
+
+  @@index([invoiceId])
+  @@index([payoutId])
+  @@map("adjustments")
+}
+
+/// Operational ledger for BlessRite charges, payouts, and refunds.
+/// Distinct from accounting `AccountTransaction`.
+model LedgerEntry {
+  id                String           @id @default(uuid()) @db.Char(36)
+  entryType         String           @map("entry_type")
+  amount            Decimal          @db.Decimal(14, 2)
+  description       String?          @db.Text
+  caseId            String?          @map("case_id") @db.Char(36)
+  serviceCase       ServiceCase?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  customerId        String?          @map("customer_id") @db.Char(36)
+  customer          User?            @relation("LedgerCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  vehicleId         String?          @map("vehicle_id") @db.Char(36)
+  vehicle           CustomerVehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  invoiceId         String?          @map("invoice_id") @db.Char(36)
+  invoice           Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  paymentId         String?          @map("payment_id") @db.Char(36)
+  payment           Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  refundId          String?          @map("refund_id") @db.Char(36)
+  refund            Refund?          @relation(fields: [refundId], references: [id], onDelete: SetNull)
+  adjustmentId      String?          @map("adjustment_id") @db.Char(36)
+  adjustment        Adjustment?      @relation(fields: [adjustmentId], references: [id], onDelete: SetNull)
+  bookingId         String?          @map("booking_id") @db.Char(36)
+  booking           Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  partsOrderId      String?          @map("parts_order_id") @db.Char(36)
+  partsOrder        PartsOrder?      @relation(fields: [partsOrderId], references: [id], onDelete: SetNull)
+  transportJobId    String?          @map("transport_job_id") @db.Char(36)
+  transportJob      TransportJob?    @relation(fields: [transportJobId], references: [id], onDelete: SetNull)
+  orgId             String?          @map("org_id") @db.Char(36)
+  organization      Organization?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  beneficiaryUserId String?          @map("beneficiary_user_id") @db.Char(36)
+  beneficiaryUser   User?            @relation("LedgerBeneficiary", fields: [beneficiaryUserId], references: [id], onDelete: SetNull)
+  payoutId          String?          @map("payout_id") @db.Char(36)
+  payout            Payout?          @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  reversesEntryId   String?          @map("reverses_entry_id") @db.Char(36)
+  reversesEntry     LedgerEntry?     @relation("LedgerReversal", fields: [reversesEntryId], references: [id], onDelete: SetNull)
+  reversals         LedgerEntry[]    @relation("LedgerReversal")
+  ruleSnapshot      Json?            @map("rule_snapshot")
+  createdById       String?          @map("created_by") @db.Char(36)
+  createdBy         User?            @relation("LedgerCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  @@index([caseId])
+  @@index([entryType, createdAt])
+  @@map("ledger_entries")
+}
+
+model DriverProfile {
+  userId           String    @id @map("user_id") @db.Char(36)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           String    @default("Active")
+  statusReason     String?   @map("status_reason") @db.Text
+  ratePerJob       Decimal?  @map("rate_per_job") @db.Decimal(14, 2)
+  licenceNumber    String?   @map("licence_number")
+  licenceExpiresOn DateTime? @map("licence_expires_on") @db.Date
+  serviceArea      String?   @map("service_area")
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("driver_profiles")
+}
+
+model PartnerOverride {
+  id           String        @id @default(uuid()) @db.Char(36)
+  orgId        String?       @map("org_id") @db.Char(36)
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  driverUserId String?       @map("driver_user_id") @db.Char(36)
+  driverUser   User?         @relation("PartnerOverrideDriver", fields: [driverUserId], references: [id], onDelete: Cascade)
+  reason       String        @db.Text
+  validUntil   DateTime      @map("valid_until")
+  createdById  String?       @map("created_by") @db.Char(36)
+  createdBy    User?         @relation("PartnerOverrideCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@index([orgId])
+  @@index([driverUserId])
+  @@map("partner_overrides")
+}
+
+model PartnerApplication {
+  id            String    @id @default(uuid()) @db.Char(36)
+  partnerType   String    @map("partner_type")
+  businessName  String?   @map("business_name")
+  contactName   String    @map("contact_name")
+  email         String
+  phone         String
+  address       String?   @db.Text
+  serviceArea   String?   @map("service_area")
+  details       String?   @db.Text
+  licenceNumber String?   @map("licence_number")
+  capabilities  Json      @default("[]")
+  status        String    @default("Submitted")
+  reviewNote    String?   @map("review_note") @db.Text
+  reviewedById  String?   @map("reviewed_by") @db.Char(36)
+  reviewedBy    User?     @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt    DateTime? @map("reviewed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([status])
+  @@index([email])
+  @@map("partner_applications")
 }
